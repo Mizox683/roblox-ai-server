@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import psycopg2
 import psycopg2.extras
@@ -23,7 +23,7 @@ DATABASE_URL = os.environ.get("DATABASE_URL", "")
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 PLANS = {
-    "free":     {"messages": 500,     "price": 0},
+    "free":     {"messages": 50,      "price": 0},
     "starter":  {"messages": 10000,   "price": 7.50},
     "basic":    {"messages": 30000,   "price": 15.00},
     "pro":      {"messages": 100000,  "price": 37.50},
@@ -46,7 +46,7 @@ def init_db():
             game_name TEXT,
             plan TEXT DEFAULT 'free',
             messages_used INTEGER DEFAULT 0,
-            messages_limit INTEGER DEFAULT 500,
+            messages_limit INTEGER DEFAULT 50,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     """)
@@ -67,6 +67,15 @@ def init_db():
             player_name TEXT,
             history TEXT DEFAULT '[]',
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS ip_registrations (
+            id SERIAL PRIMARY KEY,
+            ip_address TEXT UNIQUE NOT NULL,
+            api_key TEXT,
+            game_name TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     """)
     conn.commit()
@@ -181,26 +190,58 @@ def save_conversation_history(api_key, player_name, history):
     cur.close()
     conn.close()
 
+@app.route("/home", methods=["GET"])
+def home():
+    return render_template("index.html")
+
 @app.route("/register", methods=["POST"])
 def register():
     data = request.json
     game_name = data.get("game_name", "").strip()
     plan = data.get("plan", "free")
+
     if not game_name:
         return error("Game name required")
     if plan not in PLANS:
         return error("Invalid plan")
+
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr)
+    if ip and "," in ip:
+        ip = ip.split(",")[0].strip()
+
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("SELECT * FROM ip_registrations WHERE ip_address=%s", (ip,))
+    existing_ip = cur.fetchone()
+
+    if existing_ip and plan == "free":
+        cur.close()
+        conn.close()
+        return jsonify({
+            "status": "error",
+            "message": "already_registered",
+            "existing_key": existing_ip["api_key"],
+            "game_name": existing_ip["game_name"]
+        }), 403
+
     api_key = generate_key(game_name)
     limit = PLANS[plan]["messages"]
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute(
+
+    cur2 = conn.cursor()
+    cur2.execute(
         "INSERT INTO clients (api_key, game_name, plan, messages_limit) VALUES (%s, %s, %s, %s)",
         (api_key, game_name, plan, limit)
     )
+    if plan == "free":
+        cur2.execute(
+            "INSERT INTO ip_registrations (ip_address, api_key, game_name) VALUES (%s, %s, %s)",
+            (ip, api_key, game_name)
+        )
     conn.commit()
+    cur2.close()
     cur.close()
     conn.close()
+
     return success({
         "api_key": api_key,
         "game_name": game_name,
