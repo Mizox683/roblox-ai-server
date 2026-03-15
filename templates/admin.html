@@ -106,7 +106,7 @@
         tr:hover td { background: rgba(137, 180, 250, 0.02); }
         .tag { padding: 3px 9px; border-radius: 20px; font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
         .tag.free { background: #2a2a3e; color: #6c7086; }
-        .tag.daily { background: #1a2e1a; color: #a6e3a1; }
+        .tag.premium { background: #1a2e1a; color: #a6e3a1; }
         .tag.active { background: #1a2e1a; color: #a6e3a1; }
         .tag.expired { background: #2e1a1a; color: #f38ba8; }
         .tag.expiring { background: #2e2a1a; color: #f9e2af; }
@@ -165,7 +165,7 @@
     <div class="content">
         <div class="stats">
             <div class="stat"><div class="n" id="sTotalGames">-</div><div class="l">Total Games</div></div>
-            <div class="stat"><div class="n" id="sPaidGames">-</div><div class="l">Paid Daily</div></div>
+            <div class="stat"><div class="n" id="sPaidGames">-</div><div class="l">Paid Premium</div></div>
             <div class="stat"><div class="n" id="sFreeGames">-</div><div class="l">Free Trial</div></div>
             <div class="stat"><div class="n" id="sTotalMsgs">-</div><div class="l">Total Messages</div></div>
             <div class="stat"><div class="n" id="sExpiring" style="color:#f9e2af">-</div><div class="l">Expiring ≤5d</div></div>
@@ -202,7 +202,7 @@
                 <input class="search-bar" type="text" id="searchBox" placeholder="Search game, discord or key..." oninput="renderTable()" />
                 <div class="filter-btns">
                     <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
-                    <button class="filter-btn" onclick="setFilter('daily',this)">Paid</button>
+                    <button class="filter-btn" onclick="setFilter('premium',this)">Paid</button>
                     <button class="filter-btn" onclick="setFilter('free',this)">Free</button>
                     <button class="filter-btn" onclick="setFilter('expiring',this)">⚠️ Expiring</button>
                     <button class="filter-btn" onclick="setFilter('expired',this)">❌ Expired</button>
@@ -297,7 +297,7 @@
 
     function renderStats(data) {
         const c = data.customers
-        const paid = c.filter(x => x.plan === "daily")
+        const paid = c.filter(x => x.plan === "premium")
         const free = c.filter(x => x.plan === "free")
         const expiring = c.filter(x => { const d = getDaysLeft(x.expires_at); return d !== null && d <= 5 && d > 0 })
         const expired = c.filter(x => { const d = getDaysLeft(x.expires_at); return d !== null && d <= 0 })
@@ -332,7 +332,7 @@
                 c.api_key.toLowerCase().includes(search)
             const d = getDaysLeft(c.expires_at)
             const mf = currentFilter === "all" ||
-                (currentFilter === "daily" && c.plan === "daily") ||
+                (currentFilter === "premium" && c.plan === "premium") ||
                 (currentFilter === "free" && c.plan === "free") ||
                 (currentFilter === "expiring" && d !== null && d <= 5 && d > 0) ||
                 (currentFilter === "expired" && d !== null && d <= 0)
@@ -368,7 +368,7 @@
                     daysHtml = `<span style="color:#6c7086">${freeDaysLeft}d</span>`
                     statusTag = `<span class="tag free">FREE</span>`
                 }
-            } else if (c.plan === "daily") {
+            } else if (c.plan === "premium") {
                 if (isDisabled) {
                     daysHtml = `<span style="color:#f38ba8">DISABLED</span>`
                     statusTag = `<span class="tag disabled">DISABLED</span>`
@@ -389,9 +389,9 @@
 
             const discord = c.discord_username
                 ? `<span style="color:#89b4fa">${c.discord_username}</span>`
-                : (c.plan === "daily" ? `<span style="color:#f38ba8">⚠️ Not set</span>` : `<span style="color:#313244">—</span>`)
+                : (c.plan === "premium" ? `<span style="color:#f38ba8">⚠️ Not set</span>` : `<span style="color:#313244">—</span>`)
 
-            const renewBtn = c.plan === "daily"
+            const renewBtn = c.plan === "premium"
                 ? `<button class="act-btn act-renew" onclick="renewKey('${c.api_key}','${c.game_name}')">🔄 Renew</button>`
                 : ""
             const toggleBtn = isDisabled
@@ -433,7 +433,7 @@
             if (data.api_key) {
                 document.getElementById("genKeyVal").textContent = data.api_key
                 document.getElementById("genKeyInfo").textContent =
-                    `Game: ${game}  |  Discord: ${discord}  |  Plan: DAILY  |  Expires: ${fmt(data.expires_at)}`
+                    `Game: ${game}  |  Discord: ${discord}  |  Plan: PREMIUM  |  Expires: ${fmt(data.expires_at)}`
                 document.getElementById("generatedKey").style.display = "block"
                 document.getElementById("genGame").value = ""
                 document.getElementById("genDiscord").value = ""
