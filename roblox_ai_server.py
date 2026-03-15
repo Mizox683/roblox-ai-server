@@ -10,29 +10,29 @@ import threading
 from datetime import datetime
 import urllib.parse
 from bs4 import BeautifulSoup
-
+ 
 app = Flask(__name__)
 CORS(app)
-
+ 
 @app.after_request
 def add_headers(response):
     response.headers["ngrok-skip-browser-warning"] = "true"
     return response
-
+ 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
 TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY", "")
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-
+ 
 PLANS = {
     "free":  {"messages": 50,   "price": 0},
     "daily": {"messages": 1000, "price": 5.00},
 }
-
+ 
 def get_db():
     conn = psycopg2.connect(DATABASE_URL, sslmode="require")
     return conn
-
+ 
 def init_db():
     conn = get_db()
     cur = conn.cursor()
@@ -75,23 +75,34 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS reviews (
+            id SERIAL PRIMARY KEY,
+            ip_address TEXT UNIQUE NOT NULL,
+            reviewer_name TEXT,
+            rating INTEGER,
+            review_text TEXT,
+            plan TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
     conn.commit()
     cur.close()
     conn.close()
-
+ 
 def safe_init_db():
     try:
         init_db()
         print("Database initialized successfully")
     except Exception as e:
         print(f"Database init error (non-fatal): {e}")
-
+ 
 threading.Thread(target=safe_init_db, daemon=True).start()
-
+ 
 def generate_key(game_name):
     raw = f"{game_name}{datetime.now().isoformat()}"
     return "rai_" + hashlib.sha256(raw.encode()).hexdigest()[:24]
-
+ 
 def get_client(api_key):
     conn = get_db()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -100,16 +111,15 @@ def get_client(api_key):
     cur.close()
     conn.close()
     return row
-
+ 
 def success(data=None, message="OK"):
     return jsonify({"status": "success", "message": message, "data": data})
-
+ 
 def error(message, code=400):
     return jsonify({"status": "error", "message": message}), code
-
+ 
 def web_search(query):
     try:
-        # Try Tavily first (best, real-time results)
         if TAVILY_API_KEY:
             try:
                 resp = requests.post(
@@ -136,15 +146,14 @@ def web_search(query):
                     return " | ".join(results)
             except Exception as e:
                 print(f"Tavily error: {e}")
-
-        # Fallback: DuckDuckGo
+ 
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Accept-Language": "en-US,en;q=0.9",
         }
         results = []
         encoded = urllib.parse.quote(query)
-
+ 
         try:
             ddg_api_url = "https://api.duckduckgo.com/?q=" + encoded + "&format=json&no_html=1&skip_disambig=1"
             ddg_api_resp = requests.get(ddg_api_url, headers=headers, timeout=6)
@@ -165,10 +174,10 @@ def web_search(query):
                     results.append(topic["Text"][:200])
         except Exception as e:
             print(f"DDG API error: {e}")
-
+ 
         if results:
             return " | ".join(results)
-
+ 
         try:
             ddg_url = "https://html.duckduckgo.com/html/?q=" + encoded
             ddg_resp = requests.get(ddg_url, headers=headers, timeout=6)
@@ -181,13 +190,13 @@ def web_search(query):
                 results.append((title + ": " + text) if title else text)
         except Exception as e:
             print(f"DDG HTML error: {e}")
-
+ 
         return " | ".join(results) if results else ""
-
+ 
     except Exception as e:
         print(f"Search error: {e}")
         return ""
-
+ 
 def get_conversation_history(api_key, player_name):
     conn = get_db()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -201,7 +210,7 @@ def get_conversation_history(api_key, player_name):
     if row:
         return json.loads(row["history"])
     return []
-
+ 
 def save_conversation_history(api_key, player_name, history):
     if len(history) > 50:
         history = history[-50:]
@@ -225,31 +234,31 @@ def save_conversation_history(api_key, player_name, history):
     conn.commit()
     cur.close()
     conn.close()
-
+ 
 @app.route("/home", methods=["GET"])
 def home():
     return render_template("index.html")
-
+ 
 @app.route("/register", methods=["POST"])
 def register():
     data = request.json
     game_name = data.get("game_name", "").strip()
     plan = data.get("plan", "free")
-
+ 
     if not game_name:
         return error("Game name required")
     if plan not in PLANS:
         return error("Invalid plan")
-
+ 
     ip = request.headers.get("X-Forwarded-For", request.remote_addr)
     if ip and "," in ip:
         ip = ip.split(",")[0].strip()
-
+ 
     conn = get_db()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("SELECT * FROM ip_registrations WHERE ip_address=%s", (ip,))
     existing_ip = cur.fetchone()
-
+ 
     if existing_ip and plan == "free":
         cur.close()
         conn.close()
@@ -259,10 +268,10 @@ def register():
             "existing_key": existing_ip["api_key"],
             "game_name": existing_ip["game_name"]
         }), 403
-
+ 
     api_key = generate_key(game_name)
     limit = PLANS[plan]["messages"]
-
+ 
     cur2 = conn.cursor()
     cur2.execute(
         "INSERT INTO clients (api_key, game_name, plan, messages_limit) VALUES (%s, %s, %s, %s)",
@@ -277,14 +286,14 @@ def register():
     cur2.close()
     cur.close()
     conn.close()
-
+ 
     return success({
         "api_key": api_key,
         "game_name": game_name,
         "plan": plan,
         "messages_limit": limit
     }, "Game registered!")
-
+ 
 @app.route("/chat", methods=["POST"])
 def chat():
     data = request.json
@@ -293,17 +302,17 @@ def chat():
     message = data.get("message", "")
     npc_name = data.get("npc_name", "Assistant")
     npc_personality = data.get("npc_personality", "You are a helpful assistant in a Roblox game.")
-
+ 
     if not api_key or not message:
         return error("api_key and message required")
-
+ 
     client = get_client(api_key)
     if not client:
         return error("Invalid API key", 401)
-
+ 
     used = client["messages_used"]
     limit = client["messages_limit"]
-
+ 
     if used >= limit:
         return jsonify({
             "status": "limit_reached",
@@ -311,7 +320,7 @@ def chat():
             "messages_used": used,
             "messages_limit": limit
         })
-
+ 
     has_exact_search = '"' in message
     search_keywords = [
         "what is", "who is", "when is", "where is", "how much",
@@ -325,10 +334,10 @@ def chat():
         "new", "best", "top", "ranked", "worth", "salary",
         "define", "meaning", "explain", "describe", "compare"
     ]
-
+ 
     needs_search = has_exact_search or any(kw in message.lower() for kw in search_keywords)
     search_context = ""
-
+ 
     if needs_search:
         current_year = datetime.now().year
         time_sensitive = ["president", "ceo", "owner", "prime minister", "leader", "governor",
@@ -341,9 +350,9 @@ def chat():
         search_context = web_search(search_query)
         if not search_context or len(search_context) < 50:
             search_context = web_search(message + " " + str(current_year))
-
+ 
     history = get_conversation_history(api_key, player_name)
-
+ 
     today = datetime.now().strftime("%B %d, %Y")
     system_prompt = (
         "You are " + npc_name + ", a highly intelligent AI assistant inside a Roblox game.\n"
@@ -360,35 +369,32 @@ def chat():
         "The player name is " + player_name + ".\n"
         "Today is " + today + ".\n\n"
         "IMPORTANT RULES:\n"
-        "- You have FULL access to the internet through a web search tool\n"
-        "- You ALWAYS have up to date information - never say you are stuck in a training cutoff\n"
-        "- Never say you do not have internet access - you DO have access\n"
+        "- You have access to web search but results may be outdated - always caveat current info\n"
         "- Never say you are an AI language model - just be natural and helpful\n"
         "- You remember everything said in this conversation\n"
         "- Keep responses concise (1-3 sentences) and fun for a Roblox game\n"
         "- Never think out loud, never say searching or let me check - just give the answer\n"
+        "- If you are not sure about current info, say it might be outdated\n"
         "- Today is " + today + " - always use this as the current date"
     )
-
+ 
     if search_context:
         system_prompt += (
-            "\n\n=== LIVE WEB SEARCH RESULTS ===\n"
+            "\n\n=== WEB SEARCH RESULTS (may be outdated) ===\n"
             + search_context +
             "\n=== END OF SEARCH RESULTS ===\n\n"
-            "CRITICAL: These search results are the CURRENT real world as of " + today + ".\n"
-            "- ALWAYS trust search results over your training data - your training is outdated\n"
-            "- Give a direct confident answer based on the search results\n"
-            "- Do NOT say according to my search - just state the answer naturally\n"
-            "- Do NOT think out loud or show your reasoning"
+            "Use these results to help answer but note they may not be fully up to date.\n"
+            "Give a direct answer and if it involves current events mention it may be outdated.\n"
+            "Do NOT think out loud or show your reasoning - just answer."
         )
     else:
         system_prompt += (
             "\n\nNo web search needed. Answer from your knowledge.\n"
             "Remember today is " + today + "."
         )
-
+ 
     history.append({"role": "user", "content": message})
-
+ 
     try:
         response = requests.post(
             GROQ_URL,
@@ -406,16 +412,16 @@ def chat():
             },
             timeout=20
         )
-
+ 
         result = response.json()
         if "choices" not in result or not result["choices"]:
             print(f"Groq error response: {result}")
             return error("AI returned no response: " + str(result.get("error", {}).get("message", "Unknown")))
         reply = result["choices"][0]["message"]["content"].strip()
-
+ 
         history.append({"role": "assistant", "content": reply})
         save_conversation_history(api_key, player_name, history)
-
+ 
         conn = get_db()
         cur = conn.cursor()
         cur.execute(
@@ -429,7 +435,7 @@ def chat():
         conn.commit()
         cur.close()
         conn.close()
-
+ 
         return success({
             "reply": reply,
             "npc_name": npc_name,
@@ -437,10 +443,10 @@ def chat():
             "messages_remaining": limit - used - 1,
             "web_search_used": bool(search_context)
         })
-
+ 
     except Exception as e:
         return error("AI error: " + str(e))
-
+ 
 @app.route("/usage/<api_key>", methods=["GET"])
 def usage(api_key):
     client = get_client(api_key)
@@ -453,7 +459,7 @@ def usage(api_key):
         "messages_limit": client["messages_limit"],
         "messages_remaining": client["messages_limit"] - client["messages_used"],
     })
-
+ 
 @app.route("/", methods=["GET"])
 def dashboard():
     conn = get_db()
@@ -465,7 +471,7 @@ def dashboard():
     total_messages = total["t"] or 0
     cur.close()
     conn.close()
-
+ 
     rows = ""
     for c in clients:
         remaining = c["messages_limit"] - c["messages_used"]
@@ -481,9 +487,9 @@ def dashboard():
             "<td><code>" + c["api_key"] + "</code></td>"
             "</tr>"
         )
-
+ 
     return (
-        "<html><head><title>RobloxAI Dashboard</title><style>"
+        "<html><head><title>MizoxAI Dashboard</title><style>"
         "body{font-family:monospace;background:#1a1a2e;color:#cdd6f4;padding:40px;}"
         "h1{color:#89b4fa;}"
         "table{width:100%;border-collapse:collapse;margin-top:20px;}"
@@ -497,7 +503,7 @@ def dashboard():
         ".stat{background:#2a2a3e;border-radius:12px;padding:20px;display:inline-block;min-width:150px;text-align:center;margin:10px;}"
         ".num{font-size:36px;font-weight:bold;color:#89b4fa;}"
         "</style></head><body>"
-        "<h1>🤖 RobloxAI Dashboard</h1>"
+        "<h1>🤖 MizoxAI Dashboard</h1>"
         "<div>"
         "<div class=\"stat\"><div class=\"num\">" + str(len(clients)) + "</div>Games</div>"
         "<div class=\"stat\"><div class=\"num\">" + f'{total_messages:,}' + "</div>Total Messages</div>"
@@ -506,8 +512,104 @@ def dashboard():
         + rows +
         "</table></body></html>"
     )
-
+ 
+@app.route("/review", methods=["POST"])
+def add_review():
+    data = request.json
+    reviewer_name = data.get("reviewer_name", "").strip()
+    rating = data.get("rating")
+    review_text = data.get("review_text", "").strip()
+ 
+    if not reviewer_name or not rating or not review_text:
+        return error("Name, rating and review are required")
+    if not isinstance(rating, int) or rating < 1 or rating > 5:
+        return error("Rating must be between 1 and 5")
+    if len(review_text) > 300:
+        return error("Review must be under 300 characters")
+ 
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr)
+    if ip and "," in ip:
+        ip = ip.split(",")[0].strip()
+ 
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+ 
+    # Check if IP has a registered key (free or paid)
+    cur.execute("SELECT * FROM ip_registrations WHERE ip_address=%s", (ip,))
+    registered = cur.fetchone()
+ 
+    # Also check if IP has a paid key by matching against clients
+    cur.execute("SELECT * FROM clients WHERE plan='daily' AND api_key IN (SELECT api_key FROM ip_registrations WHERE ip_address=%s)", (ip,))
+    paid = cur.fetchone()
+ 
+    if not registered and not paid:
+        # Check if any client was registered from this IP via paid plan
+        cur.execute("SELECT * FROM clients WHERE plan='daily'")
+        all_paid = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify({"status": "error", "message": "not_eligible"}), 403
+ 
+    # Check if already reviewed
+    cur.execute("SELECT * FROM reviews WHERE ip_address=%s", (ip,))
+    existing = cur.fetchone()
+    if existing:
+        cur.close()
+        conn.close()
+        return jsonify({"status": "error", "message": "already_reviewed"}), 403
+ 
+    plan = "daily" if paid else "free"
+    cur2 = conn.cursor()
+    cur2.execute(
+        "INSERT INTO reviews (ip_address, reviewer_name, rating, review_text, plan) VALUES (%s, %s, %s, %s, %s)",
+        (ip, reviewer_name, rating, review_text, plan)
+    )
+    conn.commit()
+    cur2.close()
+    cur.close()
+    conn.close()
+    return success({"reviewer_name": reviewer_name, "rating": rating}, "Review added!")
+ 
+@app.route("/reviews", methods=["GET"])
+def get_reviews():
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("SELECT reviewer_name, rating, review_text, plan, created_at FROM reviews ORDER BY created_at DESC")
+    reviews = cur.fetchall()
+    cur.close()
+    conn.close()
+    result = []
+    for r in reviews:
+        result.append({
+            "reviewer_name": r["reviewer_name"],
+            "rating": r["rating"],
+            "review_text": r["review_text"],
+            "plan": r["plan"],
+            "created_at": r["created_at"].strftime("%B %d, %Y")
+        })
+    return jsonify({"status": "success", "data": result})
+ 
+@app.route("/check-eligible", methods=["GET"])
+def check_eligible():
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr)
+    if ip and "," in ip:
+        ip = ip.split(",")[0].strip()
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("SELECT * FROM ip_registrations WHERE ip_address=%s", (ip,))
+    registered = cur.fetchone()
+    cur.execute("SELECT * FROM reviews WHERE ip_address=%s", (ip,))
+    already_reviewed = cur.fetchone()
+    cur.close()
+    conn.close()
+    return jsonify({
+        "eligible": bool(registered),
+        "already_reviewed": bool(already_reviewed)
+    })
+ 
+ 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    print(f"\n🚀 RobloxAI Server running on port {port}")
+    print(f"\n🚀 MizoxAI Server running on port {port}")
     app.run(host="0.0.0.0", port=port)
+ 
