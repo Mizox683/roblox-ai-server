@@ -383,13 +383,17 @@ Remember today is {datetime.now().strftime("%B %d, %Y")}."""
                 "messages": [
                     {"role": "system", "content": system_prompt}
                 ] + history,
-                "max_tokens": 120,
-                "temperature": 0.3,
+                "max_tokens": 200,
+                "temperature": 0.4,
             },
-            timeout=15
+            timeout=20
         )
  
-        reply = response.json()["choices"][0]["message"]["content"]
+        result = response.json()
+        if "choices" not in result or not result["choices"]:
+            print(f"Groq error response: {result}")
+            return error(f"AI returned no response: {result.get('error', {}).get('message', 'Unknown error')}")
+        reply = result["choices"][0]["message"]["content"].strip()
  
         history.append({"role": "assistant", "content": reply})
         save_conversation_history(api_key, player_name, history)
