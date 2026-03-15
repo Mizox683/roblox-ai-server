@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MizoxAI Admin</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Courier New', monospace; background: #070710; color: #cdd6f4; min-height: 100vh; }
+
+        #loginScreen {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 100vh;
+        }
+        .login-box {
+            background: #111124; border: 1px solid #313244; border-radius: 16px;
+            padding: 48px 40px; width: 360px; text-align: center;
+        }
+        .login-box .logo { font-size: 36px; margin-bottom: 8px; }
+        .login-box h1 { color: #89b4fa; font-size: 20px; margin-bottom: 4px; }
+        .login-box p { color: #45475a; font-size: 13px; margin-bottom: 32px; }
+        .login-box input {
+            width: 100%; padding: 14px 18px; background: #1e1e2e;
+            border: 1px solid #313244; border-radius: 10px; color: #cdd6f4;
+            font-size: 20px; margin-bottom: 16px; outline: none; text-align: center;
+            letter-spacing: 6px; font-family: monospace; transition: border-color 0.2s;
+        }
+        .login-box input:focus { border-color: #89b4fa; }
+        .login-box button {
+            width: 100%; padding: 13px; background: #89b4fa; color: #1e1e2e;
+            border: none; border-radius: 10px; font-size: 14px; font-weight: bold;
+            cursor: pointer; transition: all 0.2s; font-family: monospace;
+        }
+        .login-box button:hover { background: #74c7ec; transform: translateY(-1px); }
+        .login-error { color: #f38ba8; font-size: 13px; margin-top: 12px; display: none; }
+
+        #adminPanel { display: none; }
+        .topbar {
+            background: #111124; border-bottom: 1px solid #1e1e2e;
+            padding: 16px 40px; display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .topbar .logo { color: #89b4fa; font-size: 18px; font-weight: bold; }
+        .topbar .right { display: flex; align-items: center; gap: 20px; }
+        .topbar .refresh { color: #6c7086; cursor: pointer; font-size: 13px; }
+        .topbar .refresh:hover { color: #89b4fa; }
+        .topbar .logout { color: #6c7086; cursor: pointer; font-size: 13px; }
+        .topbar .logout:hover { color: #f38ba8; }
+        .content { padding: 40px; max-width: 1400px; }
+
+        .stats { display: flex; gap: 16px; margin-bottom: 32px; flex-wrap: wrap; }
+        .stat {
+            background: #111124; border: 1px solid #1e1e2e; border-radius: 12px;
+            padding: 20px 28px; text-align: center; min-width: 130px;
+        }
+        .stat .n { font-size: 28px; font-weight: bold; color: #89b4fa; }
+        .stat .l { font-size: 11px; color: #45475a; margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
+
+        .card {
+            background: #111124; border: 1px solid #1e1e2e; border-radius: 16px;
+            padding: 28px; margin-bottom: 24px;
+        }
+        .card h2 { color: #89b4fa; font-size: 14px; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
+        .form-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 11px; color: #6c7086; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-group input {
+            padding: 10px 14px; background: #1e1e2e; border: 1px solid #313244;
+            border-radius: 8px; color: #cdd6f4; font-size: 13px; outline: none;
+            font-family: monospace; transition: border-color 0.2s; min-width: 200px;
+        }
+        .form-group input:focus { border-color: #89b4fa; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px; transition: all 0.2s; font-family: monospace; }
+        .btn-blue { background: #89b4fa; color: #1e1e2e; }
+        .btn-blue:hover { background: #74c7ec; }
+        .btn-green { background: #a6e3a1; color: #1e1e2e; }
+        .btn-green:hover { background: #94e2d5; }
+        .btn-red { background: #f38ba8; color: #1e1e2e; }
+        .btn-red:hover { background: #eba0ac; }
+        .generated-key {
+            background: #1a2e1a; border: 1px solid #a6e3a1; border-radius: 8px;
+            padding: 16px; margin-top: 16px; display: none;
+        }
+        .generated-key .key-val { color: #a6e3a1; font-size: 15px; word-break: break-all; margin-bottom: 6px; font-weight: bold; }
+        .generated-key .key-info { color: #6c7086; font-size: 12px; line-height: 1.8; }
+
+        .controls { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+        .search-bar {
+            padding: 10px 14px; background: #1e1e2e; border: 1px solid #313244;
+            border-radius: 8px; color: #cdd6f4; font-size: 13px; outline: none;
+            font-family: monospace; width: 260px;
+        }
+        .search-bar:focus { border-color: #89b4fa; }
+        .filter-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+        .filter-btn {
+            padding: 6px 14px; border-radius: 20px; border: 1px solid #313244;
+            background: transparent; color: #6c7086; cursor: pointer; font-size: 11px;
+            font-family: monospace; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .filter-btn.active, .filter-btn:hover { border-color: #89b4fa; color: #89b4fa; background: rgba(137,180,250,0.05); }
+
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { background: #0e0e1e; padding: 11px 14px; text-align: left; color: #45475a; font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; white-space: nowrap; border-bottom: 1px solid #1e1e2e; }
+        td { padding: 13px 14px; border-bottom: 1px solid #0e0e1e; vertical-align: middle; }
+        tr:hover td { background: rgba(137, 180, 250, 0.02); }
+        .tag { padding: 3px 9px; border-radius: 20px; font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+        .tag.free { background: #2a2a3e; color: #6c7086; }
+        .tag.daily { background: #1a2e1a; color: #a6e3a1; }
+        .tag.active { background: #1a2e1a; color: #a6e3a1; }
+        .tag.expired { background: #2e1a1a; color: #f38ba8; }
+        .tag.expiring { background: #2e2a1a; color: #f9e2af; }
+        .tag.disabled { background: #2e1a1a; color: #f38ba8; }
+        .bar-wrap { display: flex; align-items: center; gap: 8px; }
+        .bar { background: #1e1e2e; border-radius: 4px; height: 5px; width: 70px; flex-shrink: 0; }
+        .bar-fill { border-radius: 4px; height: 5px; }
+        code { background: #1e1e2e; padding: 2px 7px; border-radius: 4px; font-size: 10px; color: #6c7086; }
+        .actions { display: flex; gap: 5px; }
+        .act-btn { padding: 4px 10px; border: none; border-radius: 6px; font-size: 10px; font-weight: bold; cursor: pointer; font-family: monospace; transition: all 0.15s; text-transform: uppercase; }
+        .act-renew { background: #1a3a2a; color: #a6e3a1; border: 1px solid #a6e3a150; }
+        .act-renew:hover { background: #a6e3a1; color: #1e1e2e; }
+        .act-disable { background: #3a1a1a; color: #f38ba8; border: 1px solid #f38ba850; }
+        .act-disable:hover { background: #f38ba8; color: #1e1e2e; }
+        .act-enable { background: #1a3a2a; color: #a6e3a1; border: 1px solid #a6e3a150; }
+        .act-enable:hover { background: #a6e3a1; color: #1e1e2e; }
+        .act-copy { background: #1e1e2e; color: #6c7086; border: 1px solid #313244; }
+        .act-copy:hover { background: #313244; color: #cdd6f4; }
+        .empty { text-align: center; color: #45475a; padding: 48px; font-size: 14px; }
+        .toast {
+            position: fixed; bottom: 24px; right: 24px;
+            padding: 12px 20px; border-radius: 10px; font-weight: bold; font-size: 13px;
+            display: none; z-index: 999; font-family: monospace;
+            animation: slideIn 0.3s ease;
+        }
+        .toast.ok { background: #a6e3a1; color: #1e1e2e; }
+        .toast.err { background: #f38ba8; color: #1e1e2e; }
+        @keyframes slideIn { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+    <div class="login-box">
+        <div class="logo">🔐</div>
+        <h1>MizoxAI Admin</h1>
+        <p>Enter your passcode to continue</p>
+        <input type="password" id="passcode" placeholder="••••••••" onkeydown="if(event.key==='Enter') login()" autofocus />
+        <button onclick="login()">Unlock →</button>
+        <div class="login-error" id="loginError">❌ Wrong passcode. Try again.</div>
+    </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="adminPanel">
+    <div class="topbar">
+        <div class="logo">🤖 MizoxAI Admin</div>
+        <div class="right">
+            <span class="refresh" onclick="loadData()">↻ Refresh</span>
+            <span style="color:#45475a;font-size:11px;" id="lastRefresh"></span>
+            <span class="logout" onclick="logout()">Logout →</span>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="stats">
+            <div class="stat"><div class="n" id="sTotalGames">-</div><div class="l">Total Games</div></div>
+            <div class="stat"><div class="n" id="sPaidGames">-</div><div class="l">Paid Daily</div></div>
+            <div class="stat"><div class="n" id="sFreeGames">-</div><div class="l">Free Trial</div></div>
+            <div class="stat"><div class="n" id="sTotalMsgs">-</div><div class="l">Total Messages</div></div>
+            <div class="stat"><div class="n" id="sExpiring" style="color:#f9e2af">-</div><div class="l">Expiring ≤5d</div></div>
+            <div class="stat"><div class="n" id="sExpired" style="color:#f38ba8">-</div><div class="l">Expired</div></div>
+            <div class="stat"><div class="n" id="sProfit" style="color:#a6e3a1">-</div><div class="l">Monthly Profit</div></div>
+            <div class="stat"><div class="n" id="sRevenue" style="color:#a6e3a1">-</div><div class="l">Active Revenue</div></div>
+        </div>
+
+        <!-- GENERATE KEY -->
+        <div class="card">
+            <h2>⚡ Generate Paid Key</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Game Name</label>
+                    <input type="text" id="genGame" placeholder="Their Roblox game name" />
+                </div>
+                <div class="form-group">
+                    <label>Discord Username</label>
+                    <input type="text" id="genDiscord" placeholder="e.g. hamza#1234" />
+                </div>
+                <button class="btn btn-blue" style="align-self:flex-end" onclick="generateKey()">🚀 Generate 30-Day Key</button>
+            </div>
+            <div class="generated-key" id="generatedKey">
+                <div class="key-val" id="genKeyVal"></div>
+                <div class="key-info" id="genKeyInfo"></div>
+                <button class="btn btn-green" style="margin-top:12px;font-size:12px;padding:7px 14px;" onclick="copyGenKey()">📋 Copy Key</button>
+            </div>
+        </div>
+
+        <!-- CUSTOMERS TABLE -->
+        <div class="card">
+            <h2>📋 Customers</h2>
+            <div class="controls">
+                <input class="search-bar" type="text" id="searchBox" placeholder="Search game, discord or key..." oninput="renderTable()" />
+                <div class="filter-btns">
+                    <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+                    <button class="filter-btn" onclick="setFilter('daily',this)">Paid</button>
+                    <button class="filter-btn" onclick="setFilter('free',this)">Free</button>
+                    <button class="filter-btn" onclick="setFilter('expiring',this)">⚠️ Expiring</button>
+                    <button class="filter-btn" onclick="setFilter('expired',this)">❌ Expired</button>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Game</th>
+                            <th>Discord</th>
+                            <th>Plan</th>
+                            <th>Messages Used Today</th>
+                            <th>Days Left</th>
+                            <th>Purchased</th>
+                            <th>Expires</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                            <th>API Key</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr><td colspan="10" class="empty">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    const API = "https://roblox-ai-server-11uh.onrender.com"
+    const PASSCODE = "mizox2024"  // change this to whatever you want
+    const ADMIN_SECRET = "mizox_admin_2024"
+    let allCustomers = []
+    let currentFilter = "all"
+
+    function login() {
+        const code = document.getElementById("passcode").value
+        if (code === PASSCODE) {
+            document.getElementById("loginScreen").style.display = "none"
+            document.getElementById("adminPanel").style.display = "block"
+            loadData()
+        } else {
+            document.getElementById("loginError").style.display = "block"
+            document.getElementById("passcode").value = ""
+            setTimeout(() => document.getElementById("loginError").style.display = "none", 2500)
+        }
+    }
+
+    function logout() {
+        document.getElementById("adminPanel").style.display = "none"
+        document.getElementById("loginScreen").style.display = "flex"
+        document.getElementById("passcode").value = ""
+        allCustomers = []
+    }
+
+    function toast(msg, isErr = false) {
+        const t = document.getElementById("toast")
+        t.textContent = msg
+        t.className = "toast " + (isErr ? "err" : "ok")
+        t.style.display = "block"
+        setTimeout(() => t.style.display = "none", 3000)
+    }
+
+    function getDaysLeft(expiresAt) {
+        if (!expiresAt) return null
+        const diff = Math.ceil((new Date(expiresAt) - new Date()) / 86400000)
+        return diff
+    }
+
+    function fmt(dateStr) {
+        if (!dateStr) return "-"
+        return new Date(dateStr).toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" })
+    }
+
+    async function loadData() {
+        try {
+            const res = await fetch(`${API}/admin-data?secret=${ADMIN_SECRET}`)
+            const data = await res.json()
+            if (data.status !== "success") { toast("Failed to load", true); return }
+            allCustomers = data.data.customers
+            renderStats(data.data)
+            renderTable()
+            document.getElementById("lastRefresh").textContent = new Date().toLocaleTimeString()
+        } catch(e) {
+            toast("Cannot connect to server", true)
+        }
+    }
+
+    function renderStats(data) {
+        const c = data.customers
+        const paid = c.filter(x => x.plan === "daily")
+        const free = c.filter(x => x.plan === "free")
+        const expiring = c.filter(x => { const d = getDaysLeft(x.expires_at); return d !== null && d <= 5 && d > 0 })
+        const expired = c.filter(x => { const d = getDaysLeft(x.expires_at); return d !== null && d <= 0 })
+        // Active paid = not disabled, not expired
+        const activePaid = paid.filter(x => {
+            const d = getDaysLeft(x.expires_at)
+            return x.messages_limit > 0 && (d === null || d > 0)
+        })
+        const monthlyRevenue = activePaid.length * 5
+        document.getElementById("sTotalGames").textContent = c.length
+        document.getElementById("sPaidGames").textContent = paid.length
+        document.getElementById("sFreeGames").textContent = free.length
+        document.getElementById("sTotalMsgs").textContent = data.total_messages >= 1000 ? (data.total_messages/1000).toFixed(1)+"k" : data.total_messages
+        document.getElementById("sExpiring").textContent = expiring.length
+        document.getElementById("sExpired").textContent = expired.length
+        document.getElementById("sProfit").textContent = "$" + monthlyRevenue
+        document.getElementById("sRevenue").textContent = activePaid.length + " x $5"
+    }
+
+    function setFilter(f, btn) {
+        currentFilter = f
+        document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"))
+        btn.classList.add("active")
+        renderTable()
+    }
+
+    function renderTable() {
+        const search = document.getElementById("searchBox").value.toLowerCase()
+        let rows = allCustomers.filter(c => {
+            const ms = !search || c.game_name.toLowerCase().includes(search) ||
+                (c.discord_username||"").toLowerCase().includes(search) ||
+                c.api_key.toLowerCase().includes(search)
+            const d = getDaysLeft(c.expires_at)
+            const mf = currentFilter === "all" ||
+                (currentFilter === "daily" && c.plan === "daily") ||
+                (currentFilter === "free" && c.plan === "free") ||
+                (currentFilter === "expiring" && d !== null && d <= 5 && d > 0) ||
+                (currentFilter === "expired" && d !== null && d <= 0)
+            return ms && mf
+        })
+
+        const tbody = document.getElementById("tableBody")
+        if (!rows.length) {
+            tbody.innerHTML = `<tr><td colspan="10" class="empty">No customers found</td></tr>`
+            return
+        }
+
+        tbody.innerHTML = rows.map(c => {
+            const days = getDaysLeft(c.expires_at)
+            const isDisabled = c.messages_limit === 0
+            const pct = c.messages_limit > 0 ? Math.min(Math.round(c.messages_used / c.messages_limit * 100), 100) : 100
+            const barColor = pct >= 80 ? "#f38ba8" : "#89b4fa"
+
+            let daysHtml = `<span style="color:#45475a">-</span>`
+            let statusTag = `<span class="tag free">FREE</span>`
+
+            if (c.plan === "free") {
+                // Free trial: 1 day from created_at
+                const freeExpiry = c.created_at ? new Date(new Date(c.created_at).getTime() + 86400000) : null
+                const freeDaysLeft = freeExpiry ? Math.ceil((freeExpiry - new Date()) / 86400000) : null
+                if (isDisabled) {
+                    daysHtml = `<span style="color:#f38ba8">DISABLED</span>`
+                    statusTag = `<span class="tag disabled">DISABLED</span>`
+                } else if (freeDaysLeft !== null && freeDaysLeft <= 0) {
+                    daysHtml = `<span style="color:#f38ba8;font-weight:bold">EXPIRED</span>`
+                    statusTag = `<span class="tag expired">EXPIRED</span>`
+                } else if (freeDaysLeft !== null) {
+                    daysHtml = `<span style="color:#6c7086">${freeDaysLeft}d</span>`
+                    statusTag = `<span class="tag free">FREE</span>`
+                }
+            } else if (c.plan === "daily") {
+                if (isDisabled) {
+                    daysHtml = `<span style="color:#f38ba8">DISABLED</span>`
+                    statusTag = `<span class="tag disabled">DISABLED</span>`
+                } else if (days === null) {
+                    daysHtml = `<span style="color:#f9e2af">No expiry</span>`
+                    statusTag = `<span class="tag active">ACTIVE</span>`
+                } else if (days <= 0) {
+                    daysHtml = `<span style="color:#f38ba8;font-weight:bold">EXPIRED</span>`
+                    statusTag = `<span class="tag expired">EXPIRED</span>`
+                } else if (days <= 5) {
+                    daysHtml = `<span style="color:#f9e2af;font-weight:bold">⚠️ ${days}d</span>`
+                    statusTag = `<span class="tag expiring">EXPIRING</span>`
+                } else {
+                    daysHtml = `<span style="color:#a6e3a1">${days}d</span>`
+                    statusTag = `<span class="tag active">ACTIVE</span>`
+                }
+            }
+
+            const discord = c.discord_username
+                ? `<span style="color:#89b4fa">${c.discord_username}</span>`
+                : (c.plan === "daily" ? `<span style="color:#f38ba8">⚠️ Not set</span>` : `<span style="color:#313244">—</span>`)
+
+            const renewBtn = c.plan === "daily"
+                ? `<button class="act-btn act-renew" onclick="renewKey('${c.api_key}','${c.game_name}')">🔄 Renew</button>`
+                : ""
+            const toggleBtn = isDisabled
+                ? `<button class="act-btn act-enable" onclick="enableKey('${c.api_key}')">✅ Enable</button>`
+                : `<button class="act-btn act-disable" onclick="disableKey('${c.api_key}')">🚫 Disable</button>`
+
+            return `<tr>
+                <td><b style="color:#fff">${c.game_name}</b></td>
+                <td>${discord}</td>
+                <td><span class="tag ${c.plan}">${c.plan.toUpperCase()}</span></td>
+                <td>
+                    <div class="bar-wrap">
+                        <div class="bar"><div class="bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
+                        <span style="color:#6c7086;font-size:11px">${c.messages_used.toLocaleString()} / ${c.messages_limit.toLocaleString()}</span>
+                    </div>
+                </td>
+                <td>${daysHtml}</td>
+                <td style="color:#6c7086;font-size:11px">${fmt(c.created_at)}</td>
+                <td style="color:#6c7086;font-size:11px">${fmt(c.expires_at)}</td>
+                <td>${statusTag}</td>
+                <td><div class="actions">${renewBtn}${toggleBtn}<button class="act-btn act-copy" onclick="cp('${c.api_key}')">📋</button></div></td>
+                <td><code>${c.api_key}</code></td>
+            </tr>`
+        }).join("")
+    }
+
+    async function generateKey() {
+        const game = document.getElementById("genGame").value.trim()
+        const discord = document.getElementById("genDiscord").value.trim()
+        if (!game) { toast("Enter a game name!", true); return }
+        if (!discord) { toast("Enter a Discord username!", true); return }
+        try {
+            const res = await fetch(`${API}/admin-generate`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({game_name: game, discord_username: discord, secret: ADMIN_SECRET})
+            })
+            const data = await res.json()
+            if (data.api_key) {
+                document.getElementById("genKeyVal").textContent = data.api_key
+                document.getElementById("genKeyInfo").textContent =
+                    `Game: ${game}  |  Discord: ${discord}  |  Plan: DAILY  |  Expires: ${fmt(data.expires_at)}`
+                document.getElementById("generatedKey").style.display = "block"
+                document.getElementById("genGame").value = ""
+                document.getElementById("genDiscord").value = ""
+                toast("Key generated! 🎉")
+                loadData()
+            } else {
+                toast("Error: " + JSON.stringify(data), true)
+            }
+        } catch(e) { toast("Cannot connect to server", true) }
+    }
+
+    async function renewKey(apiKey, gameName) {
+        if (!confirm(`Renew 30-day subscription for ${gameName}?\nThis resets their expiry date and message count.`)) return
+        try {
+            const res = await fetch(`${API}/admin-renew`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({api_key: apiKey, secret: ADMIN_SECRET})
+            })
+            const data = await res.json()
+            if (data.status === "success") { toast("Renewed for 30 days! ✅"); loadData() }
+            else toast("Error: " + data.message, true)
+        } catch(e) { toast("Cannot connect", true) }
+    }
+
+    async function disableKey(apiKey) {
+        if (!confirm("Disable this key? The player will not be able to use the AI.")) return
+        try {
+            const res = await fetch(`${API}/admin-disable`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({api_key: apiKey, secret: ADMIN_SECRET})
+            })
+            const data = await res.json()
+            if (data.status === "success") { toast("Key disabled!"); loadData() }
+            else toast("Error", true)
+        } catch(e) { toast("Cannot connect", true) }
+    }
+
+    async function enableKey(apiKey) {
+        try {
+            const res = await fetch(`${API}/admin-enable`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({api_key: apiKey, secret: ADMIN_SECRET})
+            })
+            const data = await res.json()
+            if (data.status === "success") { toast("Key enabled! ✅"); loadData() }
+            else toast("Error", true)
+        } catch(e) { toast("Cannot connect", true) }
+    }
+
+    function copyGenKey() {
+        navigator.clipboard.writeText(document.getElementById("genKeyVal").textContent)
+        toast("Copied!")
+    }
+
+    function cp(text) {
+        navigator.clipboard.writeText(text)
+        toast("Key copied!")
+    }
+
+    // Auto-refresh every 5 minutes
+    setInterval(loadData, 300000)
+</script>
+</body>
+</html>
