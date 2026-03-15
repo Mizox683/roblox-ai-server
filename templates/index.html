@@ -34,8 +34,8 @@
         .stat-item .num { font-size: 32px; font-weight: bold; color: #ffffff; }
         .stat-item .label { font-size: 13px; color: #6c7086; margin-top: 4px; }
         .divider { height: 1px; background: linear-gradient(to right, transparent, #313244, transparent); margin: 0 60px; }
-        .features { padding: 100px 60px; text-align: center; position: relative; z-index: 1; }
         .section-label { display: inline-block; background: rgba(137, 180, 250, 0.1); border: 1px solid rgba(137, 180, 250, 0.2); color: #89b4fa; padding: 5px 14px; border-radius: 20px; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+        .features { padding: 100px 60px; text-align: center; position: relative; z-index: 1; }
         .features h2 { font-size: 40px; color: #ffffff; margin-bottom: 60px; font-weight: 700; letter-spacing: -1px; }
         .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 1000px; margin: 0 auto; }
         .feature-card { background: rgba(30, 30, 46, 0.5); border: 1px solid rgba(49, 50, 68, 0.8); border-radius: 20px; padding: 32px; text-align: left; transition: all 0.3s; backdrop-filter: blur(10px); }
@@ -43,31 +43,30 @@
         .feature-card .icon { font-size: 28px; margin-bottom: 16px; display: block; }
         .feature-card h3 { font-size: 17px; color: #ffffff; margin-bottom: 10px; }
         .feature-card p { font-size: 14px; color: #6c7086; line-height: 1.7; }
+        .disclaimer { background: rgba(243, 139, 168, 0.05); border: 1px solid rgba(243, 139, 168, 0.2); border-radius: 12px; padding: 14px 16px; margin: 32px auto 0; max-width: 1000px; font-size: 13px; color: #f38ba8; text-align: left; line-height: 1.6; }
         .pricing { padding: 100px 60px; text-align: center; position: relative; z-index: 1; background: rgba(17, 17, 27, 0.5); }
-        .pricing h2 { font-size: 40px; color: #ffffff; margin-bottom: 60px; font-weight: 700; letter-spacing: -1px; }
-        .pricing-grid { display: grid; gap: 16px; max-width: 600px; margin: 0 auto; }
-        .price-card { background: rgba(30, 30, 46, 0.5); border: 1px solid rgba(49, 50, 68, 0.8); border-radius: 20px; padding: 28px 20px; text-align: center; transition: all 0.3s; backdrop-filter: blur(10px); }
+        .pricing h2 { font-size: 40px; color: #ffffff; margin-bottom: 16px; font-weight: 700; letter-spacing: -1px; }
+        .pricing > p { color: #6c7086; margin-bottom: 60px; font-size: 16px; }
+        .pricing-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; max-width: 640px; margin: 0 auto; }
+        .price-card { background: rgba(30, 30, 46, 0.5); border: 1px solid rgba(49, 50, 68, 0.8); border-radius: 20px; padding: 32px 24px; text-align: center; transition: all 0.3s; backdrop-filter: blur(10px); }
         .price-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); }
         .price-card.popular { border-color: rgba(137, 180, 250, 0.5); background: rgba(137, 180, 250, 0.05); }
         .price-card .plan-name { font-size: 13px; font-weight: bold; color: #89b4fa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
-        .price-card .price { font-size: 40px; font-weight: 800; color: #ffffff; letter-spacing: -1px; }
+        .price-card .price { font-size: 44px; font-weight: 800; color: #ffffff; letter-spacing: -1px; }
         .price-card .price span { font-size: 14px; color: #6c7086; font-weight: normal; }
-        .price-card .messages { font-size: 13px; color: #6c7086; margin: 12px 0 24px; line-height: 1.6; }
-        .price-card .get-btn { background: #89b4fa; color: #1e1e2e; padding: 10px 20px; border-radius: 20px; font-weight: bold; font-size: 13px; text-decoration: none; cursor: pointer; border: none; display: inline-block; transition: all 0.2s; }
+        .price-card .messages { font-size: 13px; color: #6c7086; margin: 16px 0 24px; line-height: 1.9; }
+        .price-card .messages strong { color: #cdd6f4; }
+        .price-card .get-btn { background: #89b4fa; color: #1e1e2e; padding: 12px 24px; border-radius: 20px; font-weight: bold; font-size: 13px; text-decoration: none; cursor: pointer; border: none; display: inline-block; transition: all 0.2s; }
         .price-card .get-btn:hover { background: #74c7ec; transform: translateY(-1px); }
         .badge { background: linear-gradient(135deg, #89b4fa, #b4befe); color: #1e1e2e; font-size: 10px; font-weight: bold; padding: 3px 10px; border-radius: 10px; margin-bottom: 12px; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px; }
-        .get-key { padding: 100px 20px; text-align: center; position: relative; z-index: 1; }
-        .get-key h2 { font-size: 40px; color: #ffffff; margin-bottom: 12px; font-weight: 700; letter-spacing: -1px; }
-        .get-key > p { color: #6c7086; margin-bottom: 48px; font-size: 16px; }
         .form-box { background: rgba(30, 30, 46, 0.6); border: 1px solid rgba(49, 50, 68, 0.8); border-radius: 24px; padding: 40px; max-width: 520px; margin: 0 auto; backdrop-filter: blur(20px); }
         .form-box input, .form-box textarea, .form-box select { width: 100%; padding: 14px 18px; background: rgba(49, 50, 68, 0.5); border: 1px solid rgba(69, 71, 90, 0.8); border-radius: 12px; color: #cdd6f4; font-size: 14px; margin-bottom: 16px; outline: none; transition: border-color 0.2s; font-family: inherit; resize: none; }
-        .form-box input:focus, .form-box textarea:focus, .form-box select:focus { border-color: #89b4fa; }
+        .form-box input:focus, .form-box textarea:focus { border-color: #89b4fa; }
         .form-box select option { background: #1e1e2e; }
         .form-box button { width: 100%; padding: 14px; background: linear-gradient(135deg, #89b4fa, #b4befe); color: #1e1e2e; border: none; border-radius: 12px; font-size: 15px; font-weight: bold; cursor: pointer; transition: all 0.2s; margin-bottom: 8px; }
         .form-box button:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(137, 180, 250, 0.3); }
         .notice { background: rgba(249, 226, 175, 0.05); border: 1px solid rgba(249, 226, 175, 0.2); border-radius: 12px; padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #f9e2af; text-align: left; line-height: 1.6; }
         .notice a { color: #89b4fa; text-decoration: none; }
-        .disclaimer { background: rgba(243, 139, 168, 0.05); border: 1px solid rgba(243, 139, 168, 0.2); border-radius: 12px; padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #f38ba8; text-align: left; line-height: 1.6; }
         .result-box { display: none; background: rgba(49, 50, 68, 0.5); border-radius: 14px; padding: 20px; margin-top: 20px; text-align: left; animation: fadeInUp 0.3s ease; }
         .result-box .key-label { font-size: 12px; color: #6c7086; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
         .result-box .key-value { font-family: monospace; font-size: 13px; color: #a6e3a1; background: rgba(17, 17, 27, 0.8); padding: 12px; border-radius: 8px; word-break: break-all; }
@@ -79,6 +78,12 @@
         .error-box { display: none; background: rgba(243, 139, 168, 0.05); border: 1px solid rgba(243, 139, 168, 0.3); border-radius: 12px; padding: 20px; margin-top: 20px; text-align: left; animation: fadeInUp 0.3s ease; }
         .error-box p { color: #f38ba8; font-size: 14px; line-height: 1.8; }
         .error-box a { color: #89b4fa; text-decoration: none; font-weight: bold; }
+        .get-key { padding: 100px 20px; text-align: center; position: relative; z-index: 1; }
+        .get-key h2 { font-size: 40px; color: #ffffff; margin-bottom: 12px; font-weight: 700; letter-spacing: -1px; }
+        .get-key > p { color: #6c7086; margin-bottom: 48px; font-size: 16px; }
+        .usage-section { padding: 100px 20px; text-align: center; position: relative; z-index: 1; background: rgba(17, 17, 27, 0.5); }
+        .usage-section h2 { font-size: 40px; color: #ffffff; margin-bottom: 12px; font-weight: 700; letter-spacing: -1px; }
+        .usage-section > p { color: #6c7086; margin-bottom: 48px; font-size: 16px; }
         .scripts { padding: 100px 60px; text-align: center; position: relative; z-index: 1; background: rgba(17, 17, 27, 0.5); }
         .scripts h2 { font-size: 40px; color: #ffffff; margin-bottom: 12px; font-weight: 700; letter-spacing: -1px; }
         .scripts > p { color: #6c7086; margin-bottom: 48px; font-size: 16px; }
@@ -90,7 +95,6 @@
         .script-card pre { background: rgba(17, 17, 27, 0.8); padding: 20px; border-radius: 12px; overflow-x: auto; font-size: 12px; color: #cdd6f4; line-height: 1.7; white-space: pre-wrap; max-height: 320px; overflow-y: auto; border: 1px solid rgba(49, 50, 68, 0.5); }
         .copy-script-btn { background: rgba(137, 180, 250, 0.1); color: #89b4fa; border: 1px solid rgba(137, 180, 250, 0.3); padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 13px; white-space: nowrap; transition: all 0.2s; flex-shrink: 0; margin-left: 16px; }
         .copy-script-btn:hover { background: rgba(137, 180, 250, 0.2); transform: translateY(-1px); }
-        /* Reviews */
         .reviews { padding: 100px 60px; text-align: center; position: relative; z-index: 1; }
         .reviews h2 { font-size: 40px; color: #ffffff; margin-bottom: 12px; font-weight: 700; letter-spacing: -1px; }
         .reviews > p { color: #6c7086; margin-bottom: 48px; font-size: 16px; }
@@ -101,9 +105,9 @@
         .review-card .review-text { font-size: 14px; color: #cdd6f4; line-height: 1.7; margin-bottom: 16px; }
         .review-card .reviewer { font-size: 12px; color: #6c7086; }
         .review-card .reviewer span { color: #89b4fa; font-weight: bold; }
-        .review-card .plan-tag { display: inline-block; padding: 2px 8px; border-radius: 8px; font-size: 10px; font-weight: bold; margin-left: 8px; }
+        .plan-tag { display: inline-block; padding: 2px 8px; border-radius: 8px; font-size: 10px; font-weight: bold; margin-left: 8px; }
         .plan-tag.free { background: #45475a; color: #cdd6f4; }
-        .plan-tag.daily { background: #1e6e3e; color: #a6e3a1; }
+        .plan-tag.premium { background: #1e6e3e; color: #a6e3a1; }
         .no-reviews { color: #6c7086; font-size: 14px; padding: 40px; }
         .stars-input { display: flex; gap: 8px; margin-bottom: 16px; justify-content: center; }
         .stars-input span { font-size: 28px; cursor: pointer; filter: grayscale(1); transition: filter 0.1s; }
@@ -188,7 +192,7 @@
         <div class="feature-card">
             <span class="icon">💬</span>
             <h3>Customizable Limits</h3>
-            <p>Set daily message limits per player — default 50/day but you can change it to whatever fits your game.</p>
+            <p>Set daily message limits per player — default 50/day on free, up to 1,000/day on Premium.</p>
         </div>
         <div class="feature-card">
             <span class="icon">⚡</span>
@@ -202,11 +206,11 @@
         </div>
         <div class="feature-card">
             <span class="icon">🎨</span>
-            <h3>Custom UI Support</h3>
-            <p>Don't like the default UI? Use our no-UI script and connect it to your own design completely.</p>
+            <h3>Custom NPC Personality</h3>
+            <p>Set a custom name and personality for your AI — make it fit any game genre perfectly.</p>
         </div>
     </div>
-    <div class="disclaimer" style="max-width:1000px; margin: 32px auto 0;">
+    <div class="disclaimer">
         ⚠️ <strong>Disclaimer:</strong> The web search feature uses third-party search engines and most results may be outdated or inaccurate. MizoxAI is not responsible for incorrect information returned by the AI. Always verify important information from reliable sources.
     </div>
 </section>
@@ -214,27 +218,37 @@
 <section class="pricing" id="pricing">
     <div class="section-label">Pricing</div>
     <h2>Simple Pricing</h2>
-    <div class="pricing-grid" style="grid-template-columns: repeat(2, 1fr); max-width: 600px;">
+    <p>Start free, upgrade when you need more</p>
+    <div class="pricing-grid">
         <div class="price-card">
             <div class="plan-name">Free Trial</div>
             <div class="price">$0</div>
-            <div class="messages">50 messages total<br>1 per IP address<br>Try it out!</div>
+            <div class="messages">
+                <strong>50 messages</strong> total<br>
+                1 key per IP address<br>
+                Try it out for free!
+            </div>
             <a href="#get-key" class="get-btn">Try Free</a>
         </div>
         <div class="price-card popular">
-            <div class="badge">Paid</div>
-            <div class="plan-name">Daily</div>
+            <div class="badge">⭐ Most Popular</div>
+            <div class="plan-name">Premium</div>
             <div class="price">$5<span>/mo</span></div>
-            <div class="messages">1,000 messages/day<br>1,500 Robux + tax/month<br>~2,000 Robux with tax covered</div>
+            <div class="messages">
+                <strong>Daily cap:</strong> 1,000 messages/day<br>
+                <strong>Monthly cap:</strong> 30,000 messages<br>
+                <strong>Duration:</strong> 30 days<br>
+                ~2,000 Robux/month
+            </div>
             <a href="https://discord.com/users/1266831779566981153" target="_blank" class="get-btn">Contact Us</a>
         </div>
     </div>
 </section>
 
-<section id="usage" style="padding: 100px 20px; text-align: center; position: relative; z-index: 1; background: rgba(17, 17, 27, 0.5);">
+<section class="usage-section" id="usage">
     <div class="section-label">Usage</div>
-    <h2 style="font-size: 40px; color: #ffffff; margin-bottom: 12px; font-weight: 700; letter-spacing: -1px;">Check Your Usage</h2>
-    <p style="color: #6c7086; margin-bottom: 48px; font-size: 16px;">Enter your API key to see how many messages you have left</p>
+    <h2>Check Your Usage</h2>
+    <p>Enter your API key to see how many messages you have left</p>
     <div class="form-box">
         <input type="text" id="usageKey" placeholder="Paste your rai_ key here" />
         <button onclick="checkUsage()" style="background: linear-gradient(135deg, #a6e3a1, #94e2d5);">🔍 Check Usage</button>
@@ -281,8 +295,8 @@
     <div class="form-box">
         <div class="notice">
             ⚠️ <strong>Free trial:</strong> 50 total messages, 1 key per IP.<br>
-            Need more? <a href="https://discord.com/users/1266831779566981153" target="_blank">DM us on Discord for the paid plan!</a><br>
-            💡 <strong>Robux payments:</strong> 1,500 Robux does not include Roblox's tax — send ~2,000 Robux to cover it.
+            Need more? <a href="https://discord.com/users/1266831779566981153" target="_blank">DM us on Discord for the Premium plan!</a><br>
+            💡 <strong>Robux payments:</strong> Send ~2,000 Robux to cover tax.
         </div>
         <input type="text" id="gameName" placeholder="Your Roblox game name" />
         <button onclick="getKey()">🚀 Get Free Trial Key</button>
@@ -642,13 +656,11 @@ cooldownLabel.ZIndex = 11
 cooldownLabel.Parent = cooldownOverlay
 
 closeBtn.MouseButton1Click:Connect(function()
-    isVisible = false
     frame.Visible = false
     toggleBtn.Visible = true
 end)
 
 toggleBtn.MouseButton1Click:Connect(function()
-    isVisible = true
     frame.Visible = true
     toggleBtn.Visible = false
 end)
@@ -861,11 +873,11 @@ end</pre>
         <div class="script-card-header">
             <div>
                 <h3>📁 Script 3 — StarterPlayerScripts (No UI)</h3>
-                <div class="sub">Use this if you want to build your own UI. Connect your UI elements to the functions. Change <code style="color:#89b4fa">MESSAGE_LIMIT</code> to set messages per player per day.</div>
+                <div class="sub">Use this if you want to build your own UI. Connect your UI elements to the functions.</div>
             </div>
             <button class="copy-script-btn" onclick="copyScript('noUiScript', this)">📋 Copy</button>
         </div>
-        <pre id="noUiScript">-- MizoxAI — No UI Script
+        <pre id="noUiScript">-- MizoxAI No UI Script
 -- Requires Script 1 in ServerScriptService
 
 local Players = game:GetService("Players")
@@ -878,10 +890,8 @@ local saveFunction = remoteFolder:WaitForChild("SaveHistory")
 local loadFunction = remoteFolder:WaitForChild("LoadHistory")
 local clearFunction = remoteFolder:WaitForChild("ClearHistory")
 
--- SETTINGS
 local MESSAGE_LIMIT = 50
 local COOLDOWN_HOURS = 24
-
 local chatHistory = {}
 local messageCount = 0
 local isOnCooldown = false
@@ -897,11 +907,7 @@ local function getTimeRemaining()
 end
 
 local function saveHistory()
-    saveFunction:InvokeServer({
-        messages = chatHistory,
-        message_count = messageCount,
-        cooldown_end = cooldownEndTime
-    })
+    saveFunction:InvokeServer({ messages = chatHistory, message_count = messageCount, cooldown_end = cooldownEndTime })
 end
 
 local function loadHistory()
@@ -910,40 +916,20 @@ local function loadHistory()
         chatHistory = data.messages
         messageCount = data.message_count or #data.messages
         cooldownEndTime = data.cooldown_end or 0
-        if cooldownEndTime > 0 and os.time() < cooldownEndTime then
-            isOnCooldown = true
-        else
-            isOnCooldown = false
-            cooldownEndTime = 0
-        end
+        if cooldownEndTime > 0 and os.time() < cooldownEndTime then isOnCooldown = true
+        else isOnCooldown = false; cooldownEndTime = 0 end
     end
     return chatHistory, messageCount, isOnCooldown
-end
-
-local function clearHistory()
-    chatHistory = {}
-    messageCount = 0
-    isOnCooldown = false
-    cooldownEndTime = 0
-    clearFunction:InvokeServer()
 end
 
 local function sendMessage(message)
     if isSending then return nil, "busy" end
     if isOnCooldown then
-        if os.time() >= cooldownEndTime then
-            isOnCooldown = false
-            cooldownEndTime = 0
-            messageCount = 0
-            saveHistory()
-        else
-            return nil, "cooldown:" .. getTimeRemaining()
-        end
+        if os.time() >= cooldownEndTime then isOnCooldown = false; cooldownEndTime = 0; messageCount = 0; saveHistory()
+        else return nil, "cooldown:" .. getTimeRemaining() end
     end
     if messageCount >= MESSAGE_LIMIT then
-        isOnCooldown = true
-        cooldownEndTime = os.time() + (COOLDOWN_HOURS * 3600)
-        saveHistory()
+        isOnCooldown = true; cooldownEndTime = os.time() + (COOLDOWN_HOURS * 3600); saveHistory()
         return nil, "cooldown:" .. getTimeRemaining()
     end
     if not message or message == "" then return nil, "empty" end
@@ -957,19 +943,10 @@ local function sendMessage(message)
     return reply, nil
 end
 
-local function getMessageCount()
-    return messageCount, MESSAGE_LIMIT
-end
-
+local function getMessageCount() return messageCount, MESSAGE_LIMIT end
 local function getCooldownStatus()
     if isOnCooldown then
-        if os.time() >= cooldownEndTime then
-            isOnCooldown = false
-            cooldownEndTime = 0
-            messageCount = 0
-            saveHistory()
-            return false, nil
-        end
+        if os.time() >= cooldownEndTime then isOnCooldown = false; cooldownEndTime = 0; messageCount = 0; saveHistory(); return false, nil end
         return true, getTimeRemaining()
     end
     return false, nil
@@ -979,10 +956,7 @@ task.spawn(function()
     while true do
         task.wait(60)
         if isOnCooldown and os.time() >= cooldownEndTime then
-            isOnCooldown = false
-            cooldownEndTime = 0
-            messageCount = 0
-            saveHistory()
+            isOnCooldown = false; cooldownEndTime = 0; messageCount = 0; saveHistory()
         end
     end
 end)
@@ -993,34 +967,24 @@ loadHistory()
 -- EXAMPLE USAGE:
 --[[
     local reply, err = sendMessage("Hello!")
-    if reply then
-        myResponseLabel.Text = reply
-    elseif err and string.find(err, "cooldown") then
-        myLabel.Text = "Come back in " .. string.split(err, ":")[2]
-    end
+    if reply then myLabel.Text = reply end
 
     local used, limit = getMessageCount()
-    myCounterLabel.Text = used .. "/" .. limit
+    myCounter.Text = used .. "/" .. limit
 
     local onCooldown, timeLeft = getCooldownStatus()
-    if onCooldown then
-        myOverlay.Visible = true
-        myTimeLabel.Text = timeLeft
-    end
+    if onCooldown then myOverlay.Visible = true end
 --]]</pre>
     </div>
 </section>
 
-<!-- REVIEWS SECTION -->
 <section class="reviews" id="reviews">
     <div class="section-label">Reviews</div>
     <h2>What Developers Say</h2>
-    <p>Only users with an active free trial or paid plan can leave a review</p>
-
+    <p>Only users with an active free trial or premium plan can leave a review</p>
     <div class="reviews-grid" id="reviewsGrid">
-        <div class="no-reviews" style="grid-column: 1/-1;">Loading reviews...</div>
+        <div class="no-reviews" style="grid-column:1/-1;">Loading reviews...</div>
     </div>
-
     <div class="form-box" style="max-width:520px;">
         <div id="reviewEligibleBox">
             <div id="reviewFormInner">
@@ -1040,7 +1004,7 @@ loadHistory()
         </div>
         <div id="reviewNotEligible" style="display:none;">
             <div class="notice" style="text-align:center;">
-                🔒 You need an active free trial or paid plan to leave a review.<br>
+                🔒 You need an active free trial or premium plan to leave a review.<br>
                 <a href="#get-key">Get your free trial key →</a>
             </div>
         </div>
@@ -1055,24 +1019,17 @@ loadHistory()
     const API = "https://roblox-ai-server-11uh.onrender.com"
     let selectedRating = 0
 
-    // Star rating
     document.querySelectorAll('#starsInput span').forEach(star => {
         star.addEventListener('mouseover', () => {
             const val = parseInt(star.dataset.val)
-            document.querySelectorAll('#starsInput span').forEach((s, i) => {
-                s.classList.toggle('active', i < val)
-            })
+            document.querySelectorAll('#starsInput span').forEach((s, i) => s.classList.toggle('active', i < val))
         })
         star.addEventListener('mouseout', () => {
-            document.querySelectorAll('#starsInput span').forEach((s, i) => {
-                s.classList.toggle('active', i < selectedRating)
-            })
+            document.querySelectorAll('#starsInput span').forEach((s, i) => s.classList.toggle('active', i < selectedRating))
         })
         star.addEventListener('click', () => {
             selectedRating = parseInt(star.dataset.val)
-            document.querySelectorAll('#starsInput span').forEach((s, i) => {
-                s.classList.toggle('active', i < selectedRating)
-            })
+            document.querySelectorAll('#starsInput span').forEach((s, i) => s.classList.toggle('active', i < selectedRating))
         })
     })
 
@@ -1092,7 +1049,7 @@ loadHistory()
                     <div class="reviewer">
                         <span>${r.reviewer_name}</span>
                         <span class="plan-tag ${r.plan}">${r.plan.toUpperCase()}</span>
-                        <span style="float:right; color:#45475a;">${r.created_at}</span>
+                        <span style="float:right;color:#45475a;">${r.created_at}</span>
                     </div>
                 </div>
             `).join('')
@@ -1140,10 +1097,10 @@ loadHistory()
                 document.getElementById('reviewMsg').style.color = '#a6e3a1'
                 loadReviews()
             } else if (data.message === 'already_reviewed') {
-                document.getElementById('reviewMsg').style.display = 'block'
-                document.getElementById('reviewMsg').innerHTML = '⚠️ You have already submitted a review!'
-                document.getElementById('reviewMsg').style.color = '#f9e2af'
                 document.getElementById('reviewFormInner').style.display = 'none'
+                document.getElementById('reviewMsg').style.display = 'block'
+                document.getElementById('reviewMsg').innerHTML = '⚠️ You already submitted a review!'
+                document.getElementById('reviewMsg').style.color = '#f9e2af'
             } else if (data.message === 'not_eligible') {
                 document.getElementById('reviewFormInner').style.display = 'none'
                 document.getElementById('reviewNotEligible').style.display = 'block'
@@ -1153,7 +1110,7 @@ loadHistory()
                 btn.disabled = false
             }
         } catch(e) {
-            alert('Could not connect to server. Try again!')
+            alert('Could not connect. Try again!')
             btn.textContent = '⭐ Submit Review'
             btn.disabled = false
         }
@@ -1178,7 +1135,7 @@ loadHistory()
                 document.getElementById("keyValue").textContent = data.data.api_key
                 document.getElementById("resultBox").style.display = "block"
             } else if (data.message === "already_registered") {
-                document.getElementById("errorMsg").innerHTML = `⚠️ <strong>You already have a free trial key!</strong><br><br>Want the paid plan? <a href="https://discord.com/users/1266831779566981153" target="_blank">DM us on Discord!</a>`
+                document.getElementById("errorMsg").innerHTML = `⚠️ <strong>You already have a free trial key!</strong><br><br>Want the Premium plan? <a href="https://discord.com/users/1266831779566981153" target="_blank">DM us on Discord!</a>`
                 document.getElementById("errorBox").style.display = "block"
             } else {
                 document.getElementById("errorMsg").innerHTML = "Error: " + data.message
@@ -1195,7 +1152,7 @@ loadHistory()
     async function checkUsage() {
         const key = document.getElementById("usageKey").value.trim()
         if (!key) { alert("Please enter your API key!"); return }
-        const btn = document.querySelector("#usage .form-box button")
+        const btn = document.querySelector(".usage-section .form-box button")
         btn.textContent = "Checking..."
         btn.disabled = true
         document.getElementById("usageResult").style.display = "none"
@@ -1228,18 +1185,29 @@ loadHistory()
     }
 
     function copyKey() {
-        const key = document.getElementById("keyValue").textContent
-        navigator.clipboard.writeText(key)
+        navigator.clipboard.writeText(document.getElementById("keyValue").textContent)
         const btn = document.querySelector(".copy-btn")
         btn.textContent = "✅ Copied!"
         setTimeout(() => btn.textContent = "📋 Copy Key", 2000)
     }
 
     function copyScript(id, btn) {
-        const text = document.getElementById(id).textContent
-        navigator.clipboard.writeText(text)
+        navigator.clipboard.writeText(document.getElementById(id).textContent)
         btn.textContent = "✅ Copied!"
         setTimeout(() => btn.textContent = "📋 Copy", 2000)
+    }
+
+    async function loadStats() {
+        try {
+            const res = await fetch(`${API}/stats`)
+            const data = await res.json()
+            if (data.status === "success") {
+                const users = data.data.total_games
+                const msgs = data.data.total_messages
+                document.getElementById("statUsers").textContent = users.toLocaleString()
+                document.getElementById("statMessages").textContent = msgs >= 1000 ? (msgs/1000).toFixed(1)+"k" : msgs.toLocaleString()
+            }
+        } catch(e) {}
     }
 
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -1265,24 +1233,9 @@ loadHistory()
         observer.observe(el)
     })
 
-    // Load reviews and check eligibility on page load
+    loadStats()
     loadReviews()
     checkReviewEligibility()
-
-    // Load live stats
-    async function loadStats() {
-        try {
-            const res = await fetch(`${API}/stats`)
-            const data = await res.json()
-            if (data.status === "success") {
-                const users = data.data.total_games
-                const msgs = data.data.total_messages
-                document.getElementById("statUsers").textContent = users.toLocaleString()
-                document.getElementById("statMessages").textContent = msgs >= 1000 ? (msgs / 1000).toFixed(1) + "k" : msgs.toLocaleString()
-            }
-        } catch(e) {}
-    }
-    loadStats()
 </script>
 
 </body>
