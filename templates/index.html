@@ -6,73 +6,154 @@
     <title>RobloxAI — AI Chatbot for Roblox Games</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: #0f0f1a; color: #cdd6f4; }
-        nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 60px; background: #11111b; border-bottom: 1px solid #313244; }
-        nav .logo { font-size: 22px; font-weight: bold; color: #89b4fa; }
-        nav .links a { color: #cdd6f4; text-decoration: none; margin-left: 30px; font-size: 14px; }
-        nav .links a:hover { color: #89b4fa; }
-        .hero { text-align: center; padding: 100px 20px 60px; }
-        .hero h1 { font-size: 52px; font-weight: bold; color: #ffffff; line-height: 1.2; }
-        .hero h1 span { color: #89b4fa; }
-        .hero p { font-size: 18px; color: #6c7086; margin: 20px auto; max-width: 600px; }
-        .hero .btns { margin-top: 40px; display: flex; gap: 16px; justify-content: center; }
-        .btn-primary { background: #89b4fa; color: #1e1e2e; padding: 14px 32px; border-radius: 30px; font-weight: bold; font-size: 16px; text-decoration: none; cursor: pointer; border: none; }
-        .btn-primary:hover { background: #74c7ec; }
-        .btn-secondary { background: transparent; color: #cdd6f4; padding: 14px 32px; border-radius: 30px; font-size: 16px; text-decoration: none; border: 1px solid #313244; cursor: pointer; }
-        .btn-secondary:hover { border-color: #89b4fa; color: #89b4fa; }
-        .features { padding: 80px 60px; text-align: center; }
-        .features h2 { font-size: 36px; color: #ffffff; margin-bottom: 50px; }
-        .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 1000px; margin: 0 auto; }
-        .feature-card { background: #1e1e2e; border: 1px solid #313244; border-radius: 16px; padding: 30px; text-align: left; }
-        .feature-card .icon { font-size: 32px; margin-bottom: 16px; }
-        .feature-card h3 { font-size: 18px; color: #ffffff; margin-bottom: 10px; }
-        .feature-card p { font-size: 14px; color: #6c7086; line-height: 1.6; }
-        .pricing { padding: 80px 60px; text-align: center; background: #11111b; }
-        .pricing h2 { font-size: 36px; color: #ffffff; margin-bottom: 50px; }
-        .pricing-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; max-width: 1200px; margin: 0 auto; }
-        .price-card { background: #1e1e2e; border: 1px solid #313244; border-radius: 16px; padding: 24px; text-align: center; }
-        .price-card.popular { border-color: #89b4fa; }
-        .price-card .plan-name { font-size: 14px; font-weight: bold; color: #89b4fa; text-transform: uppercase; margin-bottom: 12px; }
-        .price-card .price { font-size: 36px; font-weight: bold; color: #ffffff; }
-        .price-card .price span { font-size: 14px; color: #6c7086; }
-        .price-card .messages { font-size: 13px; color: #6c7086; margin: 10px 0 20px; }
-        .price-card .get-btn { background: #89b4fa; color: #1e1e2e; padding: 10px 20px; border-radius: 20px; font-weight: bold; font-size: 14px; text-decoration: none; cursor: pointer; border: none; display: inline-block; }
-        .price-card .get-btn:hover { background: #74c7ec; }
-        .badge { background: #89b4fa; color: #1e1e2e; font-size: 11px; font-weight: bold; padding: 3px 10px; border-radius: 10px; margin-bottom: 12px; display: inline-block; }
-        .get-key { padding: 80px 20px; text-align: center; }
-        .get-key h2 { font-size: 36px; color: #ffffff; margin-bottom: 12px; }
-        .get-key p { color: #6c7086; margin-bottom: 40px; }
-        .form-box { background: #1e1e2e; border: 1px solid #313244; border-radius: 20px; padding: 40px; max-width: 500px; margin: 0 auto; }
-        .form-box input { width: 100%; padding: 14px 16px; background: #313244; border: 1px solid #45475a; border-radius: 10px; color: #cdd6f4; font-size: 14px; margin-bottom: 16px; outline: none; }
+        
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0a0a14;
+            color: #cdd6f4;
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0a0a14; }
+        ::-webkit-scrollbar-thumb { background: #313244; border-radius: 3px; }
+
+        .bg-gradient {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: radial-gradient(ellipse at 20% 50%, rgba(137, 180, 250, 0.05) 0%, transparent 50%),
+                        radial-gradient(ellipse at 80% 20%, rgba(180, 190, 254, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 60px;
+            background: rgba(10, 10, 20, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(49, 50, 68, 0.5);
+            z-index: 100;
+            animation: slideDown 0.5s ease;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        nav .logo { font-size: 20px; font-weight: bold; color: #89b4fa; letter-spacing: -0.5px; }
+        nav .links a { color: #6c7086; text-decoration: none; margin-left: 32px; font-size: 14px; transition: color 0.2s; }
+        nav .links a:hover { color: #cdd6f4; }
+        nav .nav-btn { background: #89b4fa; color: #1e1e2e; padding: 8px 20px; border-radius: 20px; font-weight: bold; font-size: 13px; text-decoration: none; margin-left: 32px; transition: all 0.2s; }
+        nav .nav-btn:hover { background: #74c7ec; transform: translateY(-1px); }
+
+        .hero { position: relative; text-align: center; padding: 160px 20px 80px; z-index: 1; }
+
+        .hero-badge { display: inline-block; background: rgba(137, 180, 250, 0.1); border: 1px solid rgba(137, 180, 250, 0.3); color: #89b4fa; padding: 6px 16px; border-radius: 20px; font-size: 13px; margin-bottom: 24px; animation: fadeInUp 0.6s ease; }
+
+        .hero h1 { font-size: 64px; font-weight: 800; color: #ffffff; line-height: 1.1; letter-spacing: -2px; animation: fadeInUp 0.7s ease; }
+        .hero h1 span { background: linear-gradient(135deg, #89b4fa, #b4befe); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p { font-size: 18px; color: #6c7086; margin: 24px auto; max-width: 560px; line-height: 1.7; animation: fadeInUp 0.8s ease; }
+        .hero .btns { margin-top: 40px; display: flex; gap: 16px; justify-content: center; animation: fadeInUp 0.9s ease; }
+
+        @keyframes fadeInUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .btn-primary { background: #89b4fa; color: #1e1e2e; padding: 14px 32px; border-radius: 30px; font-weight: bold; font-size: 15px; text-decoration: none; transition: all 0.2s; border: none; cursor: pointer; }
+        .btn-primary:hover { background: #74c7ec; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(137, 180, 250, 0.3); }
+        .btn-secondary { background: transparent; color: #cdd6f4; padding: 14px 32px; border-radius: 30px; font-size: 15px; text-decoration: none; border: 1px solid #313244; transition: all 0.2s; cursor: pointer; }
+        .btn-secondary:hover { border-color: #89b4fa; color: #89b4fa; transform: translateY(-2px); }
+
+        .stats { display: flex; justify-content: center; gap: 60px; padding: 40px 20px; position: relative; z-index: 1; animation: fadeInUp 1s ease; }
+        .stat-item { text-align: center; }
+        .stat-item .num { font-size: 32px; font-weight: bold; color: #ffffff; }
+        .stat-item .label { font-size: 13px; color: #6c7086; margin-top: 4px; }
+
+        .divider { height: 1px; background: linear-gradient(to right, transparent, #313244, transparent); margin: 0 60px; }
+
+        .features { padding: 100px 60px; text-align: center; position: relative; z-index: 1; }
+        .section-label { display: inline-block; background: rgba(137, 180, 250, 0.1); border: 1px solid rgba(137, 180, 250, 0.2); color: #89b4fa; padding: 5px 14px; border-radius: 20px; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+        .features h2 { font-size: 40px; color: #ffffff; margin-bottom: 60px; font-weight: 700; letter-spacing: -1px; }
+        .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 1000px; margin: 0 auto; }
+        .feature-card { background: rgba(30, 30, 46, 0.5); border: 1px solid rgba(49, 50, 68, 0.8); border-radius: 20px; padding: 32px; text-align: left; transition: all 0.3s; backdrop-filter: blur(10px); }
+        .feature-card:hover { border-color: rgba(137, 180, 250, 0.3); transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); }
+        .feature-card .icon { font-size: 28px; margin-bottom: 16px; display: block; }
+        .feature-card h3 { font-size: 17px; color: #ffffff; margin-bottom: 10px; }
+        .feature-card p { font-size: 14px; color: #6c7086; line-height: 1.7; }
+
+        .pricing { padding: 100px 60px; text-align: center; position: relative; z-index: 1; background: rgba(17, 17, 27, 0.5); }
+        .pricing h2 { font-size: 40px; color: #ffffff; margin-bottom: 60px; font-weight: 700; letter-spacing: -1px; }
+        .pricing-grid { display: grid; gap: 16px; max-width: 1100px; margin: 0 auto; }
+        .price-card { background: rgba(30, 30, 46, 0.5); border: 1px solid rgba(49, 50, 68, 0.8); border-radius: 20px; padding: 28px 20px; text-align: center; transition: all 0.3s; backdrop-filter: blur(10px); }
+        .price-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); }
+        .price-card.popular { border-color: rgba(137, 180, 250, 0.5); background: rgba(137, 180, 250, 0.05); }
+        .price-card .plan-name { font-size: 13px; font-weight: bold; color: #89b4fa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+        .price-card .price { font-size: 40px; font-weight: 800; color: #ffffff; letter-spacing: -1px; }
+        .price-card .price span { font-size: 14px; color: #6c7086; font-weight: normal; }
+        .price-card .messages { font-size: 13px; color: #6c7086; margin: 12px 0 24px; line-height: 1.6; }
+        .price-card .get-btn { background: #89b4fa; color: #1e1e2e; padding: 10px 20px; border-radius: 20px; font-weight: bold; font-size: 13px; text-decoration: none; cursor: pointer; border: none; display: inline-block; transition: all 0.2s; }
+        .price-card .get-btn:hover { background: #74c7ec; transform: translateY(-1px); }
+        .badge { background: linear-gradient(135deg, #89b4fa, #b4befe); color: #1e1e2e; font-size: 10px; font-weight: bold; padding: 3px 10px; border-radius: 10px; margin-bottom: 12px; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .get-key { padding: 100px 20px; text-align: center; position: relative; z-index: 1; }
+        .get-key h2 { font-size: 40px; color: #ffffff; margin-bottom: 12px; font-weight: 700; letter-spacing: -1px; }
+        .get-key > p { color: #6c7086; margin-bottom: 48px; font-size: 16px; }
+        .form-box { background: rgba(30, 30, 46, 0.6); border: 1px solid rgba(49, 50, 68, 0.8); border-radius: 24px; padding: 40px; max-width: 520px; margin: 0 auto; backdrop-filter: blur(20px); }
+        .form-box input { width: 100%; padding: 14px 18px; background: rgba(49, 50, 68, 0.5); border: 1px solid rgba(69, 71, 90, 0.8); border-radius: 12px; color: #cdd6f4; font-size: 14px; margin-bottom: 16px; outline: none; transition: border-color 0.2s; }
         .form-box input:focus { border-color: #89b4fa; }
-        .form-box button { width: 100%; padding: 14px; background: #89b4fa; color: #1e1e2e; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; }
-        .form-box button:hover { background: #74c7ec; }
-        .notice { background: #313244; border-radius: 10px; padding: 14px; margin-bottom: 20px; font-size: 13px; color: #f9e2af; text-align: left; line-height: 1.6; }
-        .notice a { color: #89b4fa; }
-        .result-box { display: none; background: #313244; border-radius: 10px; padding: 20px; margin-top: 20px; text-align: left; }
-        .result-box .key-label { font-size: 12px; color: #6c7086; margin-bottom: 8px; }
-        .result-box .key-value { font-family: monospace; font-size: 14px; color: #a6e3a1; background: #1e1e2e; padding: 12px; border-radius: 8px; word-break: break-all; }
-        .result-box .copy-btn { margin-top: 12px; background: #45475a; color: #cdd6f4; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+        .form-box button { width: 100%; padding: 14px; background: linear-gradient(135deg, #89b4fa, #b4befe); color: #1e1e2e; border: none; border-radius: 12px; font-size: 15px; font-weight: bold; cursor: pointer; transition: all 0.2s; }
+        .form-box button:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(137, 180, 250, 0.3); }
+        .notice { background: rgba(249, 226, 175, 0.05); border: 1px solid rgba(249, 226, 175, 0.2); border-radius: 12px; padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #f9e2af; text-align: left; line-height: 1.6; }
+        .notice a { color: #89b4fa; text-decoration: none; }
+        .result-box { display: none; background: rgba(49, 50, 68, 0.5); border-radius: 14px; padding: 20px; margin-top: 20px; text-align: left; animation: fadeInUp 0.3s ease; }
+        .result-box .key-label { font-size: 12px; color: #6c7086; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .result-box .key-value { font-family: monospace; font-size: 13px; color: #a6e3a1; background: rgba(17, 17, 27, 0.8); padding: 12px; border-radius: 8px; word-break: break-all; }
+        .result-box .copy-btn { margin-top: 12px; background: rgba(69, 71, 90, 0.8); color: #cdd6f4; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; transition: all 0.2s; }
         .result-box .copy-btn:hover { background: #585b70; }
-        .result-box .instructions { margin-top: 16px; font-size: 13px; color: #6c7086; line-height: 1.8; }
-        .result-box .instructions code { color: #89b4fa; }
-        .error-box { display: none; background: #3e1e1e; border: 1px solid #f38ba8; border-radius: 10px; padding: 20px; margin-top: 20px; text-align: left; }
+        .result-box .instructions { margin-top: 16px; font-size: 13px; color: #6c7086; line-height: 2; }
+        .result-box .instructions code { color: #89b4fa; font-family: monospace; }
+        .result-box .instructions a { color: #89b4fa; text-decoration: none; }
+        .error-box { display: none; background: rgba(243, 139, 168, 0.05); border: 1px solid rgba(243, 139, 168, 0.3); border-radius: 12px; padding: 20px; margin-top: 20px; text-align: left; animation: fadeInUp 0.3s ease; }
         .error-box p { color: #f38ba8; font-size: 14px; line-height: 1.8; }
-        .error-box a { color: #89b4fa; font-weight: bold; }
-        .scripts { padding: 80px 60px; text-align: center; }
-        .scripts h2 { font-size: 36px; color: #ffffff; margin-bottom: 12px; }
-        .scripts p { color: #6c7086; margin-bottom: 40px; }
-        .script-card { background: #1e1e2e; border: 1px solid #313244; border-radius: 16px; padding: 30px; margin-bottom: 24px; text-align: left; max-width: 900px; margin: 0 auto 24px; }
-        .script-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .script-card h3 { color: #ffffff; font-size: 18px; }
-        .script-card .sub { color: #6c7086; font-size: 13px; margin-top: 4px; }
-        .script-card pre { background: #11111b; padding: 20px; border-radius: 10px; overflow-x: auto; font-size: 12px; color: #cdd6f4; line-height: 1.6; white-space: pre-wrap; max-height: 300px; overflow-y: auto; }
-        .copy-script-btn { background: #89b4fa; color: #1e1e2e; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 13px; white-space: nowrap; }
-        .copy-script-btn:hover { background: #74c7ec; }
-        footer { text-align: center; padding: 40px; color: #45475a; font-size: 13px; border-top: 1px solid #313244; }
+        .error-box a { color: #89b4fa; text-decoration: none; font-weight: bold; }
+
+        .scripts { padding: 100px 60px; text-align: center; position: relative; z-index: 1; background: rgba(17, 17, 27, 0.5); }
+        .scripts h2 { font-size: 40px; color: #ffffff; margin-bottom: 12px; font-weight: 700; letter-spacing: -1px; }
+        .scripts > p { color: #6c7086; margin-bottom: 48px; font-size: 16px; }
+        .script-card { background: rgba(30, 30, 46, 0.5); border: 1px solid rgba(49, 50, 68, 0.8); border-radius: 20px; padding: 30px; margin: 0 auto 24px; text-align: left; max-width: 960px; backdrop-filter: blur(10px); transition: all 0.3s; }
+        .script-card:hover { border-color: rgba(137, 180, 250, 0.2); }
+        .script-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+        .script-card h3 { color: #ffffff; font-size: 17px; }
+        .script-card .sub { color: #6c7086; font-size: 13px; margin-top: 6px; line-height: 1.5; max-width: 600px; }
+        .script-card pre { background: rgba(17, 17, 27, 0.8); padding: 20px; border-radius: 12px; overflow-x: auto; font-size: 12px; color: #cdd6f4; line-height: 1.7; white-space: pre-wrap; max-height: 320px; overflow-y: auto; border: 1px solid rgba(49, 50, 68, 0.5); }
+        .copy-script-btn { background: rgba(137, 180, 250, 0.1); color: #89b4fa; border: 1px solid rgba(137, 180, 250, 0.3); padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 13px; white-space: nowrap; transition: all 0.2s; flex-shrink: 0; margin-left: 16px; }
+        .copy-script-btn:hover { background: rgba(137, 180, 250, 0.2); transform: translateY(-1px); }
+
+        footer { text-align: center; padding: 40px; color: #45475a; font-size: 13px; border-top: 1px solid rgba(49, 50, 68, 0.5); position: relative; z-index: 1; }
+        footer a { color: #6c7086; text-decoration: none; transition: color 0.2s; }
+        footer a:hover { color: #89b4fa; }
+
+        @media (max-width: 768px) {
+            nav { padding: 16px 20px; }
+            nav .links { display: none; }
+            .hero h1 { font-size: 40px; }
+            .features-grid { grid-template-columns: 1fr; }
+            .stats { gap: 30px; flex-wrap: wrap; }
+            .features, .pricing, .scripts { padding: 60px 20px; }
+        }
     </style>
 </head>
 <body>
+
+<div class="bg-gradient"></div>
 
 <nav>
     <div class="logo">🤖 RobloxAI</div>
@@ -81,112 +162,147 @@
         <a href="#pricing">Pricing</a>
         <a href="#get-key">Get Key</a>
         <a href="#scripts">Scripts</a>
+        <a href="https://discord.com/users/1266831779566981153" target="_blank" class="nav-btn">Contact Us</a>
     </div>
 </nav>
 
 <section class="hero">
+    <div class="hero-badge">✨ Now with web search & memory</div>
     <h1>Add <span>AI</span> to Your<br>Roblox Game</h1>
-    <p>Give your players a smart AI assistant with internet access, memory and 50 messages per day — in minutes.</p>
+    <p>Give your players a smart AI assistant with real-time internet access, conversation memory, and customizable message limits — ready in minutes.</p>
     <div class="btns">
-        <a href="#get-key" class="btn-primary">Get Free API Key</a>
-        <a href="#scripts" class="btn-secondary">View Scripts</a>
+        <a href="#get-key" class="btn-primary">🚀 Get Free API Key</a>
+        <a href="#scripts" class="btn-secondary">View Scripts →</a>
     </div>
 </section>
 
+<div class="stats">
+    <div class="stat-item">
+        <div class="num">50</div>
+        <div class="label">Messages/day per player</div>
+    </div>
+    <div class="stat-item">
+        <div class="num">&lt;2s</div>
+        <div class="label">Average response time</div>
+    </div>
+    <div class="stat-item">
+        <div class="num">Free</div>
+        <div class="label">To get started</div>
+    </div>
+    <div class="stat-item">
+        <div class="num">3</div>
+        <div class="label">Scripts to choose from</div>
+    </div>
+</div>
+
+<div class="divider"></div>
+
 <section class="features" id="features">
+    <div class="section-label">Features</div>
     <h2>Everything You Need</h2>
     <div class="features-grid">
         <div class="feature-card">
-            <div class="icon">🌐</div>
+            <span class="icon">🌐</span>
             <h3>Internet Access</h3>
             <p>AI searches the web in real time — answers questions about news, prices, sports scores and more.</p>
         </div>
         <div class="feature-card">
-            <div class="icon">🧠</div>
-            <h3>Memory</h3>
-            <p>Remembers previous messages in the conversation — feels like a real chat, not a reset every time.</p>
+            <span class="icon">🧠</span>
+            <h3>Conversation Memory</h3>
+            <p>Remembers previous messages per player — feels like a real ongoing conversation.</p>
         </div>
         <div class="feature-card">
-            <div class="icon">💬</div>
-            <h3>50 Messages/Day</h3>
-            <p>Each player gets 50 messages per day with a 24 hour cooldown — fully automatic, no setup needed.</p>
+            <span class="icon">💬</span>
+            <h3>Customizable Limits</h3>
+            <p>Set daily message limits per player — default 50/day but you can change it to whatever fits your game.</p>
         </div>
         <div class="feature-card">
-            <div class="icon">⚡</div>
-            <h3>Fast Responses</h3>
-            <p>Powered by Groq — one of the fastest AI inference engines available. Responses in under 2 seconds.</p>
+            <span class="icon">⚡</span>
+            <h3>Ultra Fast</h3>
+            <p>Powered by Groq — one of the fastest AI inference engines. Responses in under 2 seconds.</p>
         </div>
         <div class="feature-card">
-            <div class="icon">🔌</div>
+            <span class="icon">🔌</span>
             <h3>Easy Integration</h3>
-            <p>Two Roblox scripts — drop them in your game and you're done. No coding knowledge required.</p>
+            <p>Three scripts — one with built-in UI, one without for custom UI. Drop in and done.</p>
         </div>
         <div class="feature-card">
-            <div class="icon">📊</div>
-            <h3>Usage Tracking</h3>
-            <p>See exactly how many messages your game has used. Upgrade your plan anytime as you grow.</p>
+            <span class="icon">🎨</span>
+            <h3>Custom UI Support</h3>
+            <p>Don't like the default UI? Use our no-UI script and connect it to your own design completely.</p>
         </div>
     </div>
 </section>
 
 <section class="pricing" id="pricing">
+    <div class="section-label">Pricing</div>
     <h2>Simple Pricing</h2>
-    <div class="pricing-grid">
+    <div class="pricing-grid" style="grid-template-columns: repeat(3, 1fr); max-width: 900px;">
         <div class="price-card">
             <div class="plan-name">Free Trial</div>
             <div class="price">$0</div>
-            <div class="messages">50 messages total<br>1 per IP address</div>
+            <div class="messages">50 messages total<br>1 per IP address<br>Try it out!</div>
             <a href="#get-key" class="get-btn">Try Free</a>
+        </div>
+        <div class="price-card popular">
+            <div class="badge">New</div>
+            <div class="plan-name">Daily</div>
+            <div class="price">$5<span>/mo</span></div>
+            <div class="messages">1,000 messages/day<br>~2,000 Robux/month<br>⚠️ Tax not included</div>
+            <a href="https://discord.com/users/1266831779566981153" target="_blank" class="get-btn">Contact Us</a>
         </div>
         <div class="price-card">
             <div class="plan-name">Starter</div>
             <div class="price">$7.50<span>/mo</span></div>
-            <div class="messages">10,000 messages/month</div>
-            <a href="https://discord.com/channels/@me" target="_blank" class="get-btn">Contact Us</a>
+            <div class="messages">10,000 messages/month<br>Customizable limits<br>Priority support</div>
+            <a href="https://discord.com/users/1266831779566981153" target="_blank" class="get-btn">Contact Us</a>
         </div>
         <div class="price-card popular">
-            <div class="badge">POPULAR</div>
+            <div class="badge">Most Popular</div>
             <div class="plan-name">Basic</div>
             <div class="price">$15<span>/mo</span></div>
-            <div class="messages">30,000 messages/month</div>
-            <a href="https://discord.com/channels/@me" target="_blank" class="get-btn">Contact Us</a>
+            <div class="messages">30,000 messages/month<br>Customizable limits<br>Priority support</div>
+            <a href="https://discord.com/users/1266831779566981153" target="_blank" class="get-btn">Contact Us</a>
         </div>
         <div class="price-card">
             <div class="plan-name">Pro</div>
             <div class="price">$37.50<span>/mo</span></div>
-            <div class="messages">100,000 messages/month</div>
-            <a href="https://discord.com/channels/@me" target="_blank" class="get-btn">Contact Us</a>
+            <div class="messages">100,000 messages/month<br>Customizable limits<br>Priority support</div>
+            <a href="https://discord.com/users/1266831779566981153" target="_blank" class="get-btn">Contact Us</a>
         </div>
         <div class="price-card">
             <div class="plan-name">Business</div>
             <div class="price">$150<span>/mo</span></div>
-            <div class="messages">400,000 messages/month</div>
-            <a href="https://discord.com/channels/@me" target="_blank" class="get-btn">Contact Us</a>
+            <div class="messages">400,000 messages/month<br>Customizable limits<br>Priority support</div>
+            <a href="https://discord.com/users/1266831779566981153" target="_blank" class="get-btn">Contact Us</a>
         </div>
     </div>
 </section>
 
 <section class="get-key" id="get-key">
+    <div class="section-label">Get Started</div>
     <h2>Get Your Free Trial Key</h2>
-    <p>50 messages to try it out — one per IP address</p>
+    <p>50 messages to try it out — one free key per IP address</p>
     <div class="form-box">
         <div class="notice">
-            ⚠️ <strong>Free trial:</strong> 50 messages total, 1 key per IP address.<br>
-            For paid plans <a href="https://discord.com/channels/@me" target="_blank">DM us on Discord</a>!
+            ⚠️ <strong>Free trial:</strong> 50 total messages, 1 key per IP.<br>
+            Need more? <a href="https://discord.com/users/1266831779566981153" target="_blank">DM us on Discord for paid plans!</a><br>
+            💡 <strong>Robux payments:</strong> Price in Robux does not include Roblox's tax — you must send extra to cover it.
         </div>
         <input type="text" id="gameName" placeholder="Your Roblox game name" />
         <button onclick="getKey()">🚀 Get Free Trial Key</button>
 
         <div class="result-box" id="resultBox">
-            <div class="key-label">Your API Key:</div>
+            <div class="key-label">Your API Key</div>
             <div class="key-value" id="keyValue"></div>
             <button class="copy-btn" onclick="copyKey()">📋 Copy Key</button>
             <div class="instructions">
-                <strong>Next steps:</strong><br>
-                1. Scroll down and copy both Roblox scripts<br>
-                2. Paste your key into the Server Script where it says <code>PASTE_YOUR_RAI_KEY_HERE</code><br>
-                3. Test in Roblox Studio!<br><br>
-                Want more messages? <a href="https://discord.com/channels/@me" target="_blank">DM us on Discord!</a>
+                ✅ <strong>Next steps:</strong><br>
+                1. Scroll down and copy the Server Script<br>
+                2. Replace <code>PASTE_YOUR_RAI_KEY_HERE</code> with your key<br>
+                3. Copy the LocalScript (with UI) or No-UI Script<br>
+                4. Test in Roblox Studio!<br><br>
+                Want more messages? <a href="https://discord.com/users/1266831779566981153" target="_blank">DM us on Discord!</a>
             </div>
         </div>
 
@@ -197,16 +313,17 @@
 </section>
 
 <section class="scripts" id="scripts">
+    <div class="section-label">Integration</div>
     <h2>Roblox Scripts</h2>
-    <p>Copy and paste these into your game — replace your API key in the Server Script</p>
+    <p>Copy and paste into your game — 3 scripts, pick what you need</p>
 
     <div class="script-card">
         <div class="script-card-header">
             <div>
-                <h3>📁 Server Script — ServerScriptService</h3>
-                <div class="sub">Create a Script inside ServerScriptService and paste this. Replace PASTE_YOUR_RAI_KEY_HERE with your key.</div>
+                <h3>📁 Script 1 — ServerScriptService</h3>
+                <div class="sub">Required for all setups. Create a Script inside ServerScriptService and paste this. Replace <code style="color:#89b4fa">PASTE_YOUR_RAI_KEY_HERE</code> with your API key.</div>
             </div>
-            <button class="copy-script-btn" onclick="copyScript('serverScript')">📋 Copy</button>
+            <button class="copy-script-btn" onclick="copyScript('serverScript', this)">📋 Copy</button>
         </div>
         <pre id="serverScript">local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -257,13 +374,7 @@ chatFunction.OnServerInvoke = function(player, message)
         if response.Success then
             local data = HttpService:JSONDecode(response.Body)
             if data.status == "success" then
-                local remaining = data.data.messages_remaining
-                local reply = data.data.reply
-                local lower = string.lower(message)
-                if string.find(lower, "how many") or string.find(lower, "messages left") or string.find(lower, "remaining") then
-                    return reply .. "\n\n💬 You have " .. tostring(remaining) .. " messages remaining!"
-                end
-                return reply
+                return data.data.reply
             elseif data.status == "limit_reached" then
                 return "AI chat limit reached for this game!"
             end
@@ -312,10 +423,10 @@ end</pre>
     <div class="script-card">
         <div class="script-card-header">
             <div>
-                <h3>📁 LocalScript — StarterPlayerScripts</h3>
-                <div class="sub">Create a LocalScript inside StarterPlayerScripts and paste this</div>
+                <h3>📁 Script 2 — StarterPlayerScripts (With UI)</h3>
+                <div class="sub">Built-in dark chat UI. Create a LocalScript inside StarterPlayerScripts and paste this. Change <code style="color:#89b4fa">MESSAGE_LIMIT</code> to set how many messages per player per day.</div>
             </div>
-            <button class="copy-script-btn" onclick="copyScript('localScript')">📋 Copy</button>
+            <button class="copy-script-btn" onclick="copyScript('localScript', this)">📋 Copy</button>
         </div>
         <pre id="localScript">local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -328,8 +439,12 @@ local saveFunction = remoteFolder:WaitForChild("SaveHistory")
 local loadFunction = remoteFolder:WaitForChild("LoadHistory")
 local clearFunction = remoteFolder:WaitForChild("ClearHistory")
 
-local MESSAGE_LIMIT = 50
-local COOLDOWN_HOURS = 24
+-- ============================================================
+-- SETTINGS — change these to customize
+-- ============================================================
+local MESSAGE_LIMIT = 50      -- messages per player per day
+local COOLDOWN_HOURS = 24     -- hours before limit resets
+
 local chatHistory = {}
 local messageCount = 0
 local isOnCooldown = false
@@ -589,7 +704,7 @@ local function activateCooldown()
     cooldownEndTime = os.time() + (COOLDOWN_HOURS * 3600)
     saveHistory()
     updateCooldownDisplay()
-    addBubble("⚠️ System", "You've reached the 50 message daily limit! Come back in 24 hours.", false)
+    addBubble("⚠️ System", "You've reached the " .. MESSAGE_LIMIT .. " message daily limit! Come back in " .. COOLDOWN_HOURS .. " hours.", false)
 end
 
 local isSending = false
@@ -636,7 +751,7 @@ clearBtn.MouseButton1Click:Connect(function()
     clearFunction:InvokeServer()
     if isOnCooldown then
         updateCooldownDisplay()
-        addBubble("⚠️ System", "Chat cleared but you're still on cooldown! Come back in " .. getTimeRemaining(), false)
+        addBubble("⚠️ System", "Chat cleared but cooldown is still active! Come back in " .. getTimeRemaining(), false)
     else
         messageCount = 0
         updateCounter()
@@ -672,13 +787,171 @@ task.wait(1)
 loadHistory()
 
 if #chatHistory == 0 and not isOnCooldown then
-    addBubble("🤖 Assistant", "Hey " .. player.Name .. "! I'm your AI assistant. Ask me anything! (50 messages per day)", false)
+    addBubble("🤖 Assistant", "Hey " .. player.Name .. "! I'm your AI assistant. Ask me anything! (" .. MESSAGE_LIMIT .. " messages per day)", false)
 end</pre>
+    </div>
+
+    <div class="script-card">
+        <div class="script-card-header">
+            <div>
+                <h3>📁 Script 3 — StarterPlayerScripts (No UI)</h3>
+                <div class="sub">Use this if you want to build your own UI. Connect your UI elements to the functions. Change <code style="color:#89b4fa">MESSAGE_LIMIT</code> to set messages per player per day.</div>
+            </div>
+            <button class="copy-script-btn" onclick="copyScript('noUiScript', this)">📋 Copy</button>
+        </div>
+        <pre id="noUiScript">-- RobloxAI — No UI Script
+-- Connect your own UI to the functions below
+-- Requires Script 1 (ServerScriptService) to be in your game
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local player = Players.LocalPlayer
+
+local remoteFolder = ReplicatedStorage:WaitForChild("AIRemotes")
+local chatFunction = remoteFolder:WaitForChild("AIChat")
+local saveFunction = remoteFolder:WaitForChild("SaveHistory")
+local loadFunction = remoteFolder:WaitForChild("LoadHistory")
+local clearFunction = remoteFolder:WaitForChild("ClearHistory")
+
+-- ============================================================
+-- SETTINGS — change these
+-- ============================================================
+local MESSAGE_LIMIT = 50      -- messages per player per day
+local COOLDOWN_HOURS = 24     -- hours before limit resets
+
+local chatHistory = {}
+local messageCount = 0
+local isOnCooldown = false
+local cooldownEndTime = 0
+local isSending = false
+
+local function getTimeRemaining()
+    local remaining = cooldownEndTime - os.time()
+    if remaining <= 0 then return "0h 0m" end
+    local hours = math.floor(remaining / 3600)
+    local minutes = math.floor((remaining % 3600) / 60)
+    return hours .. "h " .. minutes .. "m"
+end
+
+local function saveHistory()
+    saveFunction:InvokeServer({
+        messages = chatHistory,
+        message_count = messageCount,
+        cooldown_end = cooldownEndTime
+    })
+end
+
+local function loadHistory()
+    local data = loadFunction:InvokeServer()
+    if data and data.messages then
+        chatHistory = data.messages
+        messageCount = data.message_count or #data.messages
+        cooldownEndTime = data.cooldown_end or 0
+        if cooldownEndTime > 0 and os.time() < cooldownEndTime then
+            isOnCooldown = true
+        else
+            isOnCooldown = false
+            cooldownEndTime = 0
+        end
+    end
+    return chatHistory, messageCount, isOnCooldown
+end
+
+local function clearHistory()
+    chatHistory = {}
+    messageCount = 0
+    isOnCooldown = false
+    cooldownEndTime = 0
+    clearFunction:InvokeServer()
+end
+
+local function sendMessage(message)
+    if isSending then return nil, "busy" end
+    if isOnCooldown then
+        if os.time() >= cooldownEndTime then
+            isOnCooldown = false
+            cooldownEndTime = 0
+            messageCount = 0
+            saveHistory()
+        else
+            return nil, "cooldown:" .. getTimeRemaining()
+        end
+    end
+    if messageCount >= MESSAGE_LIMIT then
+        isOnCooldown = true
+        cooldownEndTime = os.time() + (COOLDOWN_HOURS * 3600)
+        saveHistory()
+        return nil, "cooldown:" .. getTimeRemaining()
+    end
+    if not message or message == "" then return nil, "empty" end
+    isSending = true
+    messageCount = messageCount + 1
+    table.insert(chatHistory, {sender = "You", text = message, isUser = true})
+    local reply = chatFunction:InvokeServer(message)
+    table.insert(chatHistory, {sender = "Assistant", text = reply, isUser = false})
+    saveHistory()
+    isSending = false
+    return reply, nil
+end
+
+local function getMessageCount()
+    return messageCount, MESSAGE_LIMIT
+end
+
+local function getCooldownStatus()
+    if isOnCooldown then
+        if os.time() >= cooldownEndTime then
+            isOnCooldown = false
+            cooldownEndTime = 0
+            messageCount = 0
+            saveHistory()
+            return false, nil
+        end
+        return true, getTimeRemaining()
+    end
+    return false, nil
+end
+
+task.spawn(function()
+    while true do
+        task.wait(60)
+        if isOnCooldown and os.time() >= cooldownEndTime then
+            isOnCooldown = false
+            cooldownEndTime = 0
+            messageCount = 0
+            saveHistory()
+        end
+    end
+end)
+
+task.wait(1)
+loadHistory()
+
+-- EXAMPLE USAGE:
+--[[
+    local reply, err = sendMessage("Hello!")
+    if reply then
+        myResponseLabel.Text = reply
+    elseif err then
+        if string.find(err, "cooldown") then
+            myLabel.Text = "Come back in " .. string.split(err, ":")[2]
+        end
+    end
+
+    local used, limit = getMessageCount()
+    myCounterLabel.Text = used .. "/" .. limit
+
+    local onCooldown, timeLeft = getCooldownStatus()
+    if onCooldown then
+        myOverlay.Visible = true
+        myTimeLabel.Text = timeLeft
+    end
+--]]</pre>
     </div>
 </section>
 
 <footer>
-    <p>🤖 RobloxAI — AI chatbot for Roblox games • <a href="https://discord.com/channels/@me" style="color:#89b4fa" target="_blank">Contact on Discord</a></p>
+    <p>🤖 RobloxAI — AI chatbot for Roblox games &nbsp;•&nbsp; <a href="https://discord.com/users/1266831779566981153" target="_blank">Contact on Discord</a></p>
 </footer>
 
 <script>
@@ -701,14 +974,14 @@ end</pre>
                 document.getElementById("keyValue").textContent = data.data.api_key
                 document.getElementById("resultBox").style.display = "block"
             } else if (data.message === "already_registered") {
-                document.getElementById("errorMsg").innerHTML = `⚠️ <strong>You already have a free trial key!</strong><br><br>Want more messages? <a href="https://discord.com/channels/@me" target="_blank">DM us on Discord to upgrade!</a>`
+                document.getElementById("errorMsg").innerHTML = `⚠️ <strong>You already have a free trial key!</strong><br><br>Want more messages or a paid plan? <a href="https://discord.com/users/1266831779566981153" target="_blank">DM us on Discord!</a>`
                 document.getElementById("errorBox").style.display = "block"
             } else {
                 document.getElementById("errorMsg").innerHTML = "Error: " + data.message
                 document.getElementById("errorBox").style.display = "block"
             }
         } catch (e) {
-            document.getElementById("errorMsg").innerHTML = "Could not connect to server. Try again!"
+            document.getElementById("errorMsg").innerHTML = "Could not connect to server. Try again in a moment!"
             document.getElementById("errorBox").style.display = "block"
         }
         btn.textContent = "🚀 Get Free Trial Key"
@@ -718,16 +991,40 @@ end</pre>
     function copyKey() {
         const key = document.getElementById("keyValue").textContent
         navigator.clipboard.writeText(key)
-        document.querySelector(".copy-btn").textContent = "✅ Copied!"
-        setTimeout(() => document.querySelector(".copy-btn").textContent = "📋 Copy Key", 2000)
+        const btn = document.querySelector(".copy-btn")
+        btn.textContent = "✅ Copied!"
+        setTimeout(() => btn.textContent = "📋 Copy Key", 2000)
     }
 
-    function copyScript(id) {
+    function copyScript(id, btn) {
         const text = document.getElementById(id).textContent
         navigator.clipboard.writeText(text)
-        event.target.textContent = "✅ Copied!"
-        setTimeout(() => event.target.textContent = "📋 Copy", 2000)
+        btn.textContent = "✅ Copied!"
+        setTimeout(() => btn.textContent = "📋 Copy", 2000)
     }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault()
+            document.querySelector(this.getAttribute('href')).scrollIntoView({ behavior: 'smooth' })
+        })
+    })
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1'
+                entry.target.style.transform = 'translateY(0)'
+            }
+        })
+    }, { threshold: 0.1 })
+
+    document.querySelectorAll('.feature-card, .price-card, .script-card').forEach(el => {
+        el.style.opacity = '0'
+        el.style.transform = 'translateY(20px)'
+        el.style.transition = 'opacity 0.5s ease, transform 0.5s ease'
+        observer.observe(el)
+    })
 </script>
 
 </body>
