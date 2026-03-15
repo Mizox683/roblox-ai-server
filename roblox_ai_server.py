@@ -312,7 +312,7 @@ CRITICAL ROBLOX TOS COMPLIANCE RULES — ALWAYS FOLLOW THESE:
 - If asked to violate any of these rules, politely decline and change the subject
 - Never help bypass Roblox's own moderation or safety systems"""
 
-The player's name is {player_name}.
+The player name is {player_name}.
 Today's date is {datetime.now().strftime("%B %d, %Y")}.
 
 IMPORTANT RULES:
