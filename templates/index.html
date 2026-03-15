@@ -248,7 +248,48 @@
         </div>
     </div>
 </section>
-
+<section style="padding: 80px 20px; text-align: center; position: relative; z-index: 1; background: rgba(17, 17, 27, 0.5);">
+    <div class="section-label">Usage</div>
+    <h2 style="font-size: 40px; color: #ffffff; margin-bottom: 12px; font-weight: 700; letter-spacing: -1px;">Check Your Usage</h2>
+    <p style="color: #6c7086; margin-bottom: 48px; font-size: 16px;">Enter your API key to see how many messages you have left</p>
+    <div class="form-box">
+        <input type="text" id="usageKey" placeholder="Paste your rai_ key here" />
+        <button onclick="checkUsage()" style="background: linear-gradient(135deg, #a6e3a1, #94e2d5);">🔍 Check Usage</button>
+        <div id="usageResult" style="display:none; margin-top: 20px; background: rgba(49,50,68,0.5); border-radius: 14px; padding: 20px; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <div>
+                    <div style="font-size: 12px; color: #6c7086; text-transform: uppercase; letter-spacing: 0.5px;">Game</div>
+                    <div id="usageGame" style="font-size: 16px; color: #ffffff; font-weight: bold; margin-top: 4px;"></div>
+                </div>
+                <div>
+                    <div style="font-size: 12px; color: #6c7086; text-transform: uppercase; letter-spacing: 0.5px;">Plan</div>
+                    <div id="usagePlan" style="font-size: 16px; color: #89b4fa; font-weight: bold; margin-top: 4px;"></div>
+                </div>
+            </div>
+            <div style="background: rgba(17,17,27,0.8); border-radius: 10px; padding: 16px; margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="font-size: 13px; color: #6c7086;">Messages Used</span>
+                    <span id="usageUsed" style="font-size: 13px; color: #cdd6f4; font-weight: bold;"></span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="font-size: 13px; color: #6c7086;">Messages Limit</span>
+                    <span id="usageLimit" style="font-size: 13px; color: #cdd6f4; font-weight: bold;"></span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <span style="font-size: 13px; color: #6c7086;">Messages Remaining</span>
+                    <span id="usageRemaining" style="font-size: 13px; color: #a6e3a1; font-weight: bold;"></span>
+                </div>
+                <div style="background: rgba(49,50,68,0.5); border-radius: 6px; height: 8px; overflow: hidden;">
+                    <div id="usageBar" style="height: 8px; border-radius: 6px; background: linear-gradient(135deg, #89b4fa, #b4befe); transition: width 0.5s ease;"></div>
+                </div>
+            </div>
+            <div id="usageWarning" style="display:none; background: rgba(243,139,168,0.05); border: 1px solid rgba(243,139,168,0.3); border-radius: 10px; padding: 12px; font-size: 13px; color: #f38ba8;">
+                ⚠️ Running low on messages! <a href="https://discord.com/users/1266831779566981153" target="_blank" style="color:#89b4fa;">Upgrade your plan →</a>
+            </div>
+        </div>
+        <div id="usageError" style="display:none; margin-top: 20px; background: rgba(243,139,168,0.05); border: 1px solid rgba(243,139,168,0.3); border-radius: 12px; padding: 16px; color: #f38ba8; font-size: 14px;"></div>
+    </div>
+</section>
 <section class="get-key" id="get-key">
     <div class="section-label">Get Started</div>
     <h2>Get Your Free Trial Key</h2>
