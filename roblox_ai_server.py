@@ -356,11 +356,13 @@ IMPORTANT RULES:
 {search_context}
 === END OF SEARCH RESULTS ===
  
-CRITICAL: The search results above are ALWAYS more accurate than your training data.
-- If search results contradict what you learned in training, ALWAYS trust the search results.
-- For example: if your training says Joe Biden is president but search results say Donald Trump, say Donald Trump.
-- NEVER answer from memory when search results are provided — use the results.
-- Give a direct, confident answer based on the search results above."""
+CRITICAL RULES FOR USING SEARCH RESULTS:
+- The search results above reflect the CURRENT real world as of today ({datetime.now().strftime("%B %d, %Y")})
+- ALWAYS trust search results over your training data — your training is outdated
+- NEVER show your thinking process, never say "found", "searching", "let me check", "I made a mistake" etc
+- Just give the final answer directly and confidently in 1-2 sentences
+- If results mention Donald Trump as president, say Donald Trump — do NOT second-guess it
+- Do NOT narrate your search process AT ALL — the player just wants the answer"""
     else:
         system_prompt += f"""
  
@@ -381,8 +383,8 @@ Remember today is {datetime.now().strftime("%B %d, %Y")}."""
                 "messages": [
                     {"role": "system", "content": system_prompt}
                 ] + history,
-                "max_tokens": 250,
-                "temperature": 0.7,
+                "max_tokens": 120,
+                "temperature": 0.3,
             },
             timeout=15
         )
