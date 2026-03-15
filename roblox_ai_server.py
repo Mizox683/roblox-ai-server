@@ -7,6 +7,7 @@ import json
 import hashlib
 import os
 from datetime import datetime
+import threading
 import urllib.parse
 from bs4 import BeautifulSoup
  
@@ -36,7 +37,6 @@ def get_db():
     conn = psycopg2.connect(DATABASE_URL, sslmode="require")
     return conn
  
-def init_db():
     conn = get_db()
     cur = conn.cursor()
     cur.execute("""
@@ -82,7 +82,14 @@ def init_db():
     cur.close()
     conn.close()
  
-init_db()
+def safe_init_db():
+    try:
+        init_db()
+        print("Database initialized successfully")
+    except Exception as e:
+        print(f"Database init error (non-fatal): {e}")
+ 
+threading.Thread(target=safe_init_db, daemon=True).start()
  
 def generate_key(game_name):
     raw = f"{game_name}{datetime.now().isoformat()}"
@@ -530,3 +537,4 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     print(f"\n🚀 RobloxAI Server running on port {port}")
     app.run(host="0.0.0.0", port=port)
+ 
