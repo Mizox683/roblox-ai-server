@@ -152,8 +152,12 @@
 
 <div class="stats">
     <div class="stat-item">
-        <div class="num">50</div>
-        <div class="label">Messages/day per player</div>
+        <div class="num" id="statUsers">...</div>
+        <div class="label">Games using MizoxAI</div>
+    </div>
+    <div class="stat-item">
+        <div class="num" id="statMessages">...</div>
+        <div class="label">Total messages sent</div>
     </div>
     <div class="stat-item">
         <div class="num">Free</div>
@@ -1264,6 +1268,21 @@ loadHistory()
     // Load reviews and check eligibility on page load
     loadReviews()
     checkReviewEligibility()
+
+    // Load live stats
+    async function loadStats() {
+        try {
+            const res = await fetch(`${API}/stats`)
+            const data = await res.json()
+            if (data.status === "success") {
+                const users = data.data.total_games
+                const msgs = data.data.total_messages
+                document.getElementById("statUsers").textContent = users.toLocaleString()
+                document.getElementById("statMessages").textContent = msgs >= 1000 ? (msgs / 1000).toFixed(1) + "k" : msgs.toLocaleString()
+            }
+        } catch(e) {}
+    }
+    loadStats()
 </script>
 
 </body>
