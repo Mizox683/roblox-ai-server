@@ -86,6 +86,19 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS customers (
+            id SERIAL PRIMARY KEY,
+            api_key TEXT UNIQUE NOT NULL,
+            discord_username TEXT,
+            game_name TEXT,
+            plan TEXT DEFAULT 'free',
+            active BOOLEAN DEFAULT TRUE,
+            expires_at TIMESTAMP,
+            expiry_email_sent BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
     conn.commit()
     cur.close()
     conn.close()
@@ -622,6 +635,147 @@ def stats():
         "total_games": games["total_games"] or 0,
         "total_messages": messages["total_messages"] or 0
     })
+
+
+@app.route("/disable/<api_key>", methods=["POST"])
+def disable_key(api_key):
+    conn = get_db()
+    cur = conn.cursor()
+    # Set messages_limit to 0 to effectively disable
+    cur.execute("UPDATE clients SET messages_limit=0 WHERE api_key=%s", (api_key,))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return success({"api_key": api_key}, "Key disabled!")
+
+@app.route("/enable/<api_key>", methods=["POST"])
+def enable_key(api_key):
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("SELECT plan FROM clients WHERE api_key=%s", (api_key,))
+    client = cur.fetchone()
+    if not client:
+        cur.close()
+        conn.close()
+        return error("Key not found", 404)
+    limit = PLANS.get(client["plan"], PLANS["free"])["messages"]
+    cur2 = conn.cursor()
+    cur2.execute("UPDATE clients SET messages_limit=%s, messages_used=0 WHERE api_key=%s", (limit, api_key))
+    conn.commit()
+    cur2.close()
+    cur.close()
+    conn.close()
+    return success({"api_key": api_key}, "Key enabled and messages reset!")
+
+
+@app.route("/admin-data", methods=["GET"])
+def admin_data():
+    secret = request.args.get("secret", "")
+    if secret != os.environ.get("ADMIN_SECRET", "mizox_admin_2024"):
+        return error("Unauthorized", 401)
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("""
+        SELECT c.api_key, c.game_name, c.plan, c.messages_used, c.messages_limit, c.created_at,
+               cu.discord_username, cu.expires_at, cu.active
+        FROM clients c
+        LEFT JOIN customers cu ON c.api_key = cu.api_key
+        ORDER BY c.created_at DESC
+    """)
+    customers = cur.fetchall()
+    cur.execute("SELECT SUM(messages_used) as t FROM clients")
+    total = cur.fetchone()
+    cur.close()
+    conn.close()
+    result = []
+    for c in customers:
+        result.append({
+            "api_key": c["api_key"],
+            "game_name": c["game_name"],
+            "plan": c["plan"],
+            "messages_used": c["messages_used"],
+            "messages_limit": c["messages_limit"],
+            "created_at": c["created_at"].isoformat() if c["created_at"] else None,
+            "discord_username": c["discord_username"],
+            "expires_at": c["expires_at"].isoformat() if c["expires_at"] else None,
+            "active": c["active"]
+        })
+    return jsonify({"status": "success", "data": {"customers": result, "total_messages": total["t"] or 0}})
+
+@app.route("/admin-generate", methods=["POST"])
+def admin_generate():
+    data = request.json
+    if data.get("secret") != os.environ.get("ADMIN_SECRET", "mizox_admin_2024"):
+        return error("Unauthorized", 401)
+    game_name = data.get("game_name", "").strip()
+    discord_username = data.get("discord_username", "").strip()
+    if not game_name or not discord_username:
+        return error("Game name and Discord username required")
+    api_key = generate_key(game_name)
+    limit = PLANS["daily"]["messages"]
+    expires_at = datetime.now() + timedelta(days=30)
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO clients (api_key, game_name, plan, messages_limit) VALUES (%s, %s, %s, %s)",
+        (api_key, game_name, "daily", limit)
+    )
+    cur.execute(
+        "INSERT INTO customers (api_key, discord_username, game_name, plan, expires_at) VALUES (%s, %s, %s, %s, %s)",
+        (api_key, discord_username, game_name, "daily", expires_at)
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+    return jsonify({"api_key": api_key, "game_name": game_name, "discord_username": discord_username, "plan": "daily", "expires_at": expires_at.isoformat()})
+
+@app.route("/admin-renew", methods=["POST"])
+def admin_renew():
+    data = request.json
+    if data.get("secret") != os.environ.get("ADMIN_SECRET", "mizox_admin_2024"):
+        return error("Unauthorized", 401)
+    api_key = data.get("api_key")
+    if not api_key:
+        return error("api_key required")
+    new_expiry = datetime.now() + timedelta(days=30)
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("UPDATE clients SET messages_used=0, messages_limit=%s WHERE api_key=%s", (PLANS["daily"]["messages"], api_key))
+    cur.execute("UPDATE customers SET expires_at=%s, active=TRUE, expiry_email_sent=FALSE WHERE api_key=%s", (new_expiry, api_key))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return success({"expires_at": new_expiry.isoformat()}, "Renewed for 30 days!")
+
+@app.route("/admin-disable", methods=["POST"])
+def admin_disable():
+    data = request.json
+    if data.get("secret") != os.environ.get("ADMIN_SECRET", "mizox_admin_2024"):
+        return error("Unauthorized", 401)
+    api_key = data.get("api_key")
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("UPDATE clients SET messages_limit=0 WHERE api_key=%s", (api_key,))
+    cur.execute("UPDATE customers SET active=FALSE WHERE api_key=%s", (api_key,))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return success({}, "Key disabled!")
+
+@app.route("/admin-enable", methods=["POST"])
+def admin_enable():
+    data = request.json
+    if data.get("secret") != os.environ.get("ADMIN_SECRET", "mizox_admin_2024"):
+        return error("Unauthorized", 401)
+    api_key = data.get("api_key")
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("UPDATE clients SET messages_limit=%s WHERE api_key=%s", (PLANS["daily"]["messages"], api_key))
+    cur.execute("UPDATE customers SET active=TRUE WHERE api_key=%s", (api_key,))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return success({}, "Key enabled!")
 
 
 if __name__ == "__main__":
