@@ -54,9 +54,7 @@
         nav .nav-btn:hover { background: #74c7ec; transform: translateY(-1px); }
 
         .hero { position: relative; text-align: center; padding: 160px 20px 80px; z-index: 1; }
-
         .hero-badge { display: inline-block; background: rgba(137, 180, 250, 0.1); border: 1px solid rgba(137, 180, 250, 0.3); color: #89b4fa; padding: 6px 16px; border-radius: 20px; font-size: 13px; margin-bottom: 24px; animation: fadeInUp 0.6s ease; }
-
         .hero h1 { font-size: 64px; font-weight: 800; color: #ffffff; line-height: 1.1; letter-spacing: -2px; animation: fadeInUp 0.7s ease; }
         .hero h1 span { background: linear-gradient(135deg, #89b4fa, #b4befe); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .hero p { font-size: 18px; color: #6c7086; margin: 24px auto; max-width: 560px; line-height: 1.7; animation: fadeInUp 0.8s ease; }
@@ -91,7 +89,7 @@
 
         .pricing { padding: 100px 60px; text-align: center; position: relative; z-index: 1; background: rgba(17, 17, 27, 0.5); }
         .pricing h2 { font-size: 40px; color: #ffffff; margin-bottom: 60px; font-weight: 700; letter-spacing: -1px; }
-        .pricing-grid { display: grid; gap: 16px; max-width: 1100px; margin: 0 auto; }
+        .pricing-grid { display: grid; gap: 16px; max-width: 600px; margin: 0 auto; }
         .price-card { background: rgba(30, 30, 46, 0.5); border: 1px solid rgba(49, 50, 68, 0.8); border-radius: 20px; padding: 28px 20px; text-align: center; transition: all 0.3s; backdrop-filter: blur(10px); }
         .price-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); }
         .price-card.popular { border-color: rgba(137, 180, 250, 0.5); background: rgba(137, 180, 250, 0.05); }
@@ -146,6 +144,7 @@
             nav .links { display: none; }
             .hero h1 { font-size: 40px; }
             .features-grid { grid-template-columns: 1fr; }
+            .pricing-grid { grid-template-columns: 1fr; }
             .stats { gap: 30px; flex-wrap: wrap; }
             .features, .pricing, .scripts { padding: 60px 20px; }
         }
@@ -182,10 +181,6 @@
         <div class="label">Messages/day per player</div>
     </div>
     <div class="stat-item">
-        <div class="num">&lt;2s</div>
-        <div class="label">Average response time</div>
-    </div>
-    <div class="stat-item">
         <div class="num">Free</div>
         <div class="label">To get started</div>
     </div>
@@ -219,7 +214,7 @@
         <div class="feature-card">
             <span class="icon">⚡</span>
             <h3>Ultra Fast</h3>
-            <p>Powered by Groq — one of the fastest AI inference engines. Responses in under 2 seconds.</p>
+            <p>Powered by Groq — one of the fastest AI inference engines available.</p>
         </div>
         <div class="feature-card">
             <span class="icon">🔌</span>
@@ -237,7 +232,7 @@
 <section class="pricing" id="pricing">
     <div class="section-label">Pricing</div>
     <h2>Simple Pricing</h2>
-    <div class="pricing-grid" style="grid-template-columns: repeat(3, 1fr); max-width: 900px;">
+    <div class="pricing-grid" style="grid-template-columns: repeat(2, 1fr); max-width: 600px;">
         <div class="price-card">
             <div class="plan-name">Free Trial</div>
             <div class="price">$0</div>
@@ -245,35 +240,10 @@
             <a href="#get-key" class="get-btn">Try Free</a>
         </div>
         <div class="price-card popular">
-            <div class="badge">New</div>
+            <div class="badge">Paid</div>
             <div class="plan-name">Daily</div>
             <div class="price">$5<span>/mo</span></div>
-            <div class="messages">1,000 messages/day<br>~2,000 Robux/month<br>⚠️ Tax not included</div>
-            <a href="https://discord.com/users/1266831779566981153" target="_blank" class="get-btn">Contact Us</a>
-        </div>
-        <div class="price-card">
-            <div class="plan-name">Starter</div>
-            <div class="price">$7.50<span>/mo</span></div>
-            <div class="messages">10,000 messages/month<br>Customizable limits<br>Priority support</div>
-            <a href="https://discord.com/users/1266831779566981153" target="_blank" class="get-btn">Contact Us</a>
-        </div>
-        <div class="price-card popular">
-            <div class="badge">Most Popular</div>
-            <div class="plan-name">Basic</div>
-            <div class="price">$15<span>/mo</span></div>
-            <div class="messages">30,000 messages/month<br>Customizable limits<br>Priority support</div>
-            <a href="https://discord.com/users/1266831779566981153" target="_blank" class="get-btn">Contact Us</a>
-        </div>
-        <div class="price-card">
-            <div class="plan-name">Pro</div>
-            <div class="price">$37.50<span>/mo</span></div>
-            <div class="messages">100,000 messages/month<br>Customizable limits<br>Priority support</div>
-            <a href="https://discord.com/users/1266831779566981153" target="_blank" class="get-btn">Contact Us</a>
-        </div>
-        <div class="price-card">
-            <div class="plan-name">Business</div>
-            <div class="price">$150<span>/mo</span></div>
-            <div class="messages">400,000 messages/month<br>Customizable limits<br>Priority support</div>
+            <div class="messages">1,000 messages/day<br>1,500 Robux + tax/month<br>~2,000 Robux with tax covered</div>
             <a href="https://discord.com/users/1266831779566981153" target="_blank" class="get-btn">Contact Us</a>
         </div>
     </div>
@@ -286,8 +256,8 @@
     <div class="form-box">
         <div class="notice">
             ⚠️ <strong>Free trial:</strong> 50 total messages, 1 key per IP.<br>
-            Need more? <a href="https://discord.com/users/1266831779566981153" target="_blank">DM us on Discord for paid plans!</a><br>
-            💡 <strong>Robux payments:</strong> Price in Robux does not include Roblox's tax — you must send extra to cover it.
+            Need more? <a href="https://discord.com/users/1266831779566981153" target="_blank">DM us on Discord for the paid plan!</a><br>
+            💡 <strong>Robux payments:</strong> 1,500 Robux does not include Roblox's tax — send ~2,000 Robux to cover it.
         </div>
         <input type="text" id="gameName" placeholder="Your Roblox game name" />
         <button onclick="getKey()">🚀 Get Free Trial Key</button>
@@ -974,7 +944,7 @@ loadHistory()
                 document.getElementById("keyValue").textContent = data.data.api_key
                 document.getElementById("resultBox").style.display = "block"
             } else if (data.message === "already_registered") {
-                document.getElementById("errorMsg").innerHTML = `⚠️ <strong>You already have a free trial key!</strong><br><br>Want more messages or a paid plan? <a href="https://discord.com/users/1266831779566981153" target="_blank">DM us on Discord!</a>`
+                document.getElementById("errorMsg").innerHTML = `⚠️ <strong>You already have a free trial key!</strong><br><br>Want the paid plan? <a href="https://discord.com/users/1266831779566981153" target="_blank">DM us on Discord!</a>`
                 document.getElementById("errorBox").style.display = "block"
             } else {
                 document.getElementById("errorMsg").innerHTML = "Error: " + data.message
