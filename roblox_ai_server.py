@@ -9,19 +9,19 @@ import os
 from datetime import datetime
 import urllib.parse
 from bs4 import BeautifulSoup
-
+ 
 app = Flask(__name__)
 CORS(app)
-
+ 
 @app.after_request
 def add_headers(response):
     response.headers["ngrok-skip-browser-warning"] = "true"
     return response
-
+ 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-
+ 
 PLANS = {
     "free":     {"messages": 50,      "price": 0},
     "starter":  {"messages": 10000,   "price": 7.50},
@@ -29,13 +29,13 @@ PLANS = {
     "pro":      {"messages": 100000,  "price": 37.50},
     "business": {"messages": 400000,  "price": 150.00},
 }
-
+ 
 OVERAGE_RATE = 0.00046
-
+ 
 def get_db():
     conn = psycopg2.connect(DATABASE_URL, sslmode="require")
     return conn
-
+ 
 def init_db():
     conn = get_db()
     cur = conn.cursor()
@@ -81,13 +81,13 @@ def init_db():
     conn.commit()
     cur.close()
     conn.close()
-
+ 
 init_db()
-
+ 
 def generate_key(game_name):
     raw = f"{game_name}{datetime.now().isoformat()}"
     return "rai_" + hashlib.sha256(raw.encode()).hexdigest()[:24]
-
+ 
 def get_client(api_key):
     conn = get_db()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -96,13 +96,13 @@ def get_client(api_key):
     cur.close()
     conn.close()
     return row
-
+ 
 def success(data=None, message="OK"):
     return jsonify({"status": "success", "message": message, "data": data})
-
+ 
 def error(message, code=400):
     return jsonify({"status": "error", "message": message}), code
-
+ 
 def web_search(query):
     try:
         headers = {
@@ -111,47 +111,47 @@ def web_search(query):
         }
         results = []
         encoded = urllib.parse.quote(query)
-
+ 
         google_url = f"https://www.google.com/search?q={encoded}&num=5"
         google_resp = requests.get(google_url, headers=headers, timeout=6)
         soup = BeautifulSoup(google_resp.text, "html.parser")
-
+ 
         featured = soup.select_one("div.BNeawe")
         if featured:
             results.append(f"FEATURED: {featured.get_text()[:300]}")
-
+ 
         for div in soup.select("div.VwiC3b")[:5]:
             text = div.get_text(strip=True)
             if text and len(text) > 30:
                 results.append(text[:200])
-
+ 
         for span in soup.select("span.hgKElc")[:2]:
             text = span.get_text(strip=True)
             if text:
                 results.append(f"FACT: {text[:200]}")
-
+ 
         if results:
             return " | ".join(results)
-
+ 
         ddg_url = f"https://html.duckduckgo.com/html/?q={encoded}"
         ddg_resp = requests.get(ddg_url, headers=headers, timeout=6)
         ddg_soup = BeautifulSoup(ddg_resp.text, "html.parser")
         snippets = ddg_soup.select(".result__snippet")
         titles = ddg_soup.select(".result__title")
-
+ 
         for i, snippet in enumerate(snippets[:5]):
             title = titles[i].get_text(strip=True) if i < len(titles) else ""
             text = snippet.get_text(strip=True)
             results.append(f"{title}: {text}" if title else text)
-
+ 
         if results:
             return " | ".join(results)
-
+ 
         return ""
     except Exception as e:
         print(f"Search error: {e}")
         return ""
-
+ 
 def get_conversation_history(api_key, player_name):
     conn = get_db()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -165,7 +165,7 @@ def get_conversation_history(api_key, player_name):
     if row:
         return json.loads(row["history"])
     return []
-
+ 
 def save_conversation_history(api_key, player_name, history):
     if len(history) > 50:
         history = history[-50:]
@@ -189,31 +189,31 @@ def save_conversation_history(api_key, player_name, history):
     conn.commit()
     cur.close()
     conn.close()
-
+ 
 @app.route("/home", methods=["GET"])
 def home():
     return render_template("index.html")
-
+ 
 @app.route("/register", methods=["POST"])
 def register():
     data = request.json
     game_name = data.get("game_name", "").strip()
     plan = data.get("plan", "free")
-
+ 
     if not game_name:
         return error("Game name required")
     if plan not in PLANS:
         return error("Invalid plan")
-
+ 
     ip = request.headers.get("X-Forwarded-For", request.remote_addr)
     if ip and "," in ip:
         ip = ip.split(",")[0].strip()
-
+ 
     conn = get_db()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("SELECT * FROM ip_registrations WHERE ip_address=%s", (ip,))
     existing_ip = cur.fetchone()
-
+ 
     if existing_ip and plan == "free":
         cur.close()
         conn.close()
@@ -223,10 +223,10 @@ def register():
             "existing_key": existing_ip["api_key"],
             "game_name": existing_ip["game_name"]
         }), 403
-
+ 
     api_key = generate_key(game_name)
     limit = PLANS[plan]["messages"]
-
+ 
     cur2 = conn.cursor()
     cur2.execute(
         "INSERT INTO clients (api_key, game_name, plan, messages_limit) VALUES (%s, %s, %s, %s)",
@@ -241,14 +241,14 @@ def register():
     cur2.close()
     cur.close()
     conn.close()
-
+ 
     return success({
         "api_key": api_key,
         "game_name": game_name,
         "plan": plan,
         "messages_limit": limit
     }, "Game registered!")
-
+ 
 @app.route("/chat", methods=["POST"])
 def chat():
     data = request.json
@@ -257,17 +257,17 @@ def chat():
     message = data.get("message", "")
     npc_name = data.get("npc_name", "Assistant")
     npc_personality = data.get("npc_personality", "You are a helpful assistant in a Roblox game.")
-
+ 
     if not api_key or not message:
         return error("api_key and message required")
-
+ 
     client = get_client(api_key)
     if not client:
         return error("Invalid API key", 401)
-
+ 
     used = client["messages_used"]
     limit = client["messages_limit"]
-
+ 
     if used >= limit:
         return jsonify({
             "status": "limit_reached",
@@ -275,7 +275,7 @@ def chat():
             "messages_used": used,
             "messages_limit": limit
         })
-
+ 
     has_exact_search = '"' in message
     search_keywords = [
         "what is", "who is", "when is", "where is", "how much",
@@ -289,19 +289,19 @@ def chat():
         "new", "best", "top", "ranked", "worth", "salary",
         "define", "meaning", "explain", "describe", "compare"
     ]
-
+ 
     needs_search = has_exact_search or any(kw in message.lower() for kw in search_keywords)
     search_context = ""
-
+ 
     if needs_search:
-        print(f"🔍 Searching web for: {message}")
+        print(f"Searching web for: {message}")
         search_context = web_search(message)
-
+ 
     history = get_conversation_history(api_key, player_name)
-
-system_prompt = f"""You are {npc_name}, a highly intelligent AI assistant inside a Roblox game.
+ 
+    system_prompt = f"""You are {npc_name}, a highly intelligent AI assistant inside a Roblox game.
 {npc_personality}
-
+ 
 CRITICAL ROBLOX TOS COMPLIANCE RULES — ALWAYS FOLLOW THESE:
 - Never generate sexual, romantic or inappropriate content of any kind
 - Never help with exploiting, hacking, or cheating in any Roblox game
@@ -310,11 +310,11 @@ CRITICAL ROBLOX TOS COMPLIANCE RULES — ALWAYS FOLLOW THESE:
 - Never generate content that discriminates based on race, gender, religion or sexuality
 - Always keep responses appropriate for all ages
 - If asked to violate any of these rules, politely decline and change the subject
-- Never help bypass Roblox's own moderation or safety systems"""
-
+- Never help bypass Roblox's own moderation or safety systems
+ 
 The player name is {player_name}.
 Today's date is {datetime.now().strftime("%B %d, %Y")}.
-
+ 
 IMPORTANT RULES:
 - You have FULL access to the internet through a web search tool
 - You ALWAYS have up to date information — never say you are stuck in a training cutoff
@@ -324,23 +324,23 @@ IMPORTANT RULES:
 - Keep responses concise (2-4 sentences) and fun for a Roblox game
 - If the player uses "quotes" around words they want an exact search for that phrase
 - Today is {datetime.now().strftime("%B %d, %Y")} — always use this as the current date"""
-
+ 
     if search_context:
         system_prompt += f"""
-
+ 
 LIVE WEB SEARCH RESULTS (use these to answer accurately):
 {search_context}
-
+ 
 Use these results to give an accurate and up to date answer.
 Never say you cannot access the internet — you just searched and got these results."""
     else:
         system_prompt += f"""
-
+ 
 No web search was needed for this message. Answer from your knowledge.
 Remember today is {datetime.now().strftime("%B %d, %Y")}."""
-
+ 
     history.append({"role": "user", "content": message})
-
+ 
     try:
         response = requests.post(
             GROQ_URL,
@@ -358,12 +358,12 @@ Remember today is {datetime.now().strftime("%B %d, %Y")}."""
             },
             timeout=15
         )
-
+ 
         reply = response.json()["choices"][0]["message"]["content"]
-
+ 
         history.append({"role": "assistant", "content": reply})
         save_conversation_history(api_key, player_name, history)
-
+ 
         conn = get_db()
         cur = conn.cursor()
         cur.execute(
@@ -377,7 +377,7 @@ Remember today is {datetime.now().strftime("%B %d, %Y")}."""
         conn.commit()
         cur.close()
         conn.close()
-
+ 
         return success({
             "reply": reply,
             "npc_name": npc_name,
@@ -385,10 +385,10 @@ Remember today is {datetime.now().strftime("%B %d, %Y")}."""
             "messages_remaining": limit - used - 1,
             "web_search_used": bool(search_context)
         })
-
+ 
     except Exception as e:
         return error(f"AI error: {str(e)}")
-
+ 
 @app.route("/usage/<api_key>", methods=["GET"])
 def usage(api_key):
     client = get_client(api_key)
@@ -401,7 +401,7 @@ def usage(api_key):
         "messages_limit": client["messages_limit"],
         "messages_remaining": client["messages_limit"] - client["messages_used"],
     })
-
+ 
 @app.route("/upgrade", methods=["POST"])
 def upgrade():
     data = request.json
@@ -425,10 +425,7 @@ def upgrade():
     cur.close()
     conn.close()
     return success({"plan": new_plan, "messages_limit": new_limit}, "Plan upgraded!")
-@app.route("/home", methods=["GET"])
-def home():
-    return render_template("index.html")
-
+ 
 @app.route("/", methods=["GET"])
 def dashboard():
     conn = get_db()
@@ -440,7 +437,7 @@ def dashboard():
     total_messages = total["t"] or 0
     cur.close()
     conn.close()
-
+ 
     rows = ""
     for c in clients:
         remaining = c["messages_limit"] - c["messages_used"]
@@ -458,7 +455,7 @@ def dashboard():
             </td>
             <td><code>{c["api_key"]}</code></td>
         </tr>"""
-
+ 
     return f"""
     <html>
     <head><title>RobloxAI Dashboard</title>
@@ -494,7 +491,7 @@ def dashboard():
     </table>
     </body></html>
     """
-
+ 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     print(f"\n🚀 RobloxAI Server running on port {port}")
