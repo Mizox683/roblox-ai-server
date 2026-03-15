@@ -425,6 +425,9 @@ def upgrade():
     cur.close()
     conn.close()
     return success({"plan": new_plan, "messages_limit": new_limit}, "Plan upgraded!")
+@app.route("/home", methods=["GET"])
+def home():
+    return render_template("index.html")
 
 @app.route("/", methods=["GET"])
 def dashboard():
