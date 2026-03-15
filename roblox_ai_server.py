@@ -26,8 +26,8 @@ ADMIN_SECRET = os.environ.get("ADMIN_SECRET", "mizox_admin_2024")
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 PLANS = {
-    "free":  {"messages": 50,   "price": 0},
-    "daily": {"messages": 1000, "price": 5.00},
+    "free":      {"messages": 50,    "price": 0},
+    "premium":   {"messages": 30000, "price": 5.00},
 }
 
 def get_db():
@@ -626,17 +626,17 @@ def admin_generate():
     if not game_name or not discord_username:
         return error("Game name and Discord username required")
     api_key = generate_key(game_name)
-    limit = PLANS["daily"]["messages"]
+    limit = PLANS["premium"]["messages"]
     expires_at = datetime.now() + timedelta(days=30)
     conn = get_db()
     cur = conn.cursor()
     cur.execute(
         "INSERT INTO clients (api_key, game_name, plan, messages_limit) VALUES (%s, %s, %s, %s)",
-        (api_key, game_name, "daily", limit)
+        (api_key, game_name, "premium", limit)
     )
     cur.execute(
         "INSERT INTO customers (api_key, discord_username, game_name, plan, expires_at) VALUES (%s, %s, %s, %s, %s)",
-        (api_key, discord_username, game_name, "daily", expires_at)
+        (api_key, discord_username, game_name, "premium", expires_at)
     )
     conn.commit()
     cur.close()
@@ -645,7 +645,7 @@ def admin_generate():
         "api_key": api_key,
         "game_name": game_name,
         "discord_username": discord_username,
-        "plan": "daily",
+        "plan": "premium",
         "expires_at": expires_at.isoformat()
     })
 
@@ -662,7 +662,7 @@ def admin_renew():
     cur = conn.cursor()
     cur.execute(
         "UPDATE clients SET messages_used=0, messages_limit=%s WHERE api_key=%s",
-        (PLANS["daily"]["messages"], api_key)
+        (PLANS["premium"]["messages"], api_key)
     )
     cur.execute(
         "UPDATE customers SET expires_at=%s, active=TRUE, expiry_email_sent=FALSE WHERE api_key=%s",
@@ -698,7 +698,7 @@ def admin_enable():
     cur = conn.cursor()
     cur.execute(
         "UPDATE clients SET messages_limit=%s WHERE api_key=%s",
-        (PLANS["daily"]["messages"], api_key)
+        (PLANS["premium"]["messages"], api_key)
     )
     cur.execute("UPDATE customers SET active=TRUE WHERE api_key=%s", (api_key,))
     conn.commit()
@@ -743,7 +743,7 @@ def dashboard():
         "td{padding:10px;border-bottom:1px solid #313244;}"
         "code{background:#313244;padding:2px 6px;border-radius:4px;font-size:11px;}"
         ".plan{padding:3px 8px;border-radius:10px;font-size:11px;font-weight:bold;}"
-        ".free{background:#45475a;}.daily{background:#1e6e3e;}"
+        ".free{background:#45475a;}.premium{background:#1e6e3e;}"
         ".bar{background:#313244;border-radius:4px;height:8px;width:100px;display:inline-block;}"
         ".fill{background:#89b4fa;border-radius:4px;height:8px;}"
         ".stat{background:#2a2a3e;border-radius:12px;padding:20px;display:inline-block;min-width:150px;text-align:center;margin:10px;}"
