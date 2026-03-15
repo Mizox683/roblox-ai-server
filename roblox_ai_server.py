@@ -309,8 +309,17 @@ def chat():
     search_context = ""
  
     if needs_search:
-        print(f"Searching web for: {message}")
-        search_context = web_search(message)
+        current_year = datetime.now().year
+        time_sensitive = ["president", "ceo", "owner", "prime minister", "leader", "governor",
+                          "current", "latest", "now", "today", "recent", "winner", "champion",
+                          "score", "price", "worth", "salary", "rank", "who is", "who are"]
+        search_query = message
+        if any(kw in message.lower() for kw in time_sensitive):
+            search_query = f"{message} {current_year}"
+        print(f"Searching web for: {search_query}")
+        search_context = web_search(search_query)
+        if not search_context or len(search_context) < 50:
+            search_context = web_search(f"{message} {current_year}")
  
     history = get_conversation_history(api_key, player_name)
  
