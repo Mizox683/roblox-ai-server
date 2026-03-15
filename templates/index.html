@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RobloxAI — AI Chatbot for Roblox Games</title>
+    <title>MizoxAI — AI Chatbot for Roblox Games</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; background: #0a0a14; color: #cdd6f4; overflow-x: hidden; }
@@ -60,12 +60,14 @@
         .get-key h2 { font-size: 40px; color: #ffffff; margin-bottom: 12px; font-weight: 700; letter-spacing: -1px; }
         .get-key > p { color: #6c7086; margin-bottom: 48px; font-size: 16px; }
         .form-box { background: rgba(30, 30, 46, 0.6); border: 1px solid rgba(49, 50, 68, 0.8); border-radius: 24px; padding: 40px; max-width: 520px; margin: 0 auto; backdrop-filter: blur(20px); }
-        .form-box input { width: 100%; padding: 14px 18px; background: rgba(49, 50, 68, 0.5); border: 1px solid rgba(69, 71, 90, 0.8); border-radius: 12px; color: #cdd6f4; font-size: 14px; margin-bottom: 16px; outline: none; transition: border-color 0.2s; }
-        .form-box input:focus { border-color: #89b4fa; }
+        .form-box input, .form-box textarea, .form-box select { width: 100%; padding: 14px 18px; background: rgba(49, 50, 68, 0.5); border: 1px solid rgba(69, 71, 90, 0.8); border-radius: 12px; color: #cdd6f4; font-size: 14px; margin-bottom: 16px; outline: none; transition: border-color 0.2s; font-family: inherit; resize: none; }
+        .form-box input:focus, .form-box textarea:focus, .form-box select:focus { border-color: #89b4fa; }
+        .form-box select option { background: #1e1e2e; }
         .form-box button { width: 100%; padding: 14px; background: linear-gradient(135deg, #89b4fa, #b4befe); color: #1e1e2e; border: none; border-radius: 12px; font-size: 15px; font-weight: bold; cursor: pointer; transition: all 0.2s; margin-bottom: 8px; }
         .form-box button:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(137, 180, 250, 0.3); }
         .notice { background: rgba(249, 226, 175, 0.05); border: 1px solid rgba(249, 226, 175, 0.2); border-radius: 12px; padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #f9e2af; text-align: left; line-height: 1.6; }
         .notice a { color: #89b4fa; text-decoration: none; }
+        .disclaimer { background: rgba(243, 139, 168, 0.05); border: 1px solid rgba(243, 139, 168, 0.2); border-radius: 12px; padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #f38ba8; text-align: left; line-height: 1.6; }
         .result-box { display: none; background: rgba(49, 50, 68, 0.5); border-radius: 14px; padding: 20px; margin-top: 20px; text-align: left; animation: fadeInUp 0.3s ease; }
         .result-box .key-label { font-size: 12px; color: #6c7086; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
         .result-box .key-value { font-family: monospace; font-size: 13px; color: #a6e3a1; background: rgba(17, 17, 27, 0.8); padding: 12px; border-radius: 8px; word-break: break-all; }
@@ -88,6 +90,24 @@
         .script-card pre { background: rgba(17, 17, 27, 0.8); padding: 20px; border-radius: 12px; overflow-x: auto; font-size: 12px; color: #cdd6f4; line-height: 1.7; white-space: pre-wrap; max-height: 320px; overflow-y: auto; border: 1px solid rgba(49, 50, 68, 0.5); }
         .copy-script-btn { background: rgba(137, 180, 250, 0.1); color: #89b4fa; border: 1px solid rgba(137, 180, 250, 0.3); padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 13px; white-space: nowrap; transition: all 0.2s; flex-shrink: 0; margin-left: 16px; }
         .copy-script-btn:hover { background: rgba(137, 180, 250, 0.2); transform: translateY(-1px); }
+        /* Reviews */
+        .reviews { padding: 100px 60px; text-align: center; position: relative; z-index: 1; }
+        .reviews h2 { font-size: 40px; color: #ffffff; margin-bottom: 12px; font-weight: 700; letter-spacing: -1px; }
+        .reviews > p { color: #6c7086; margin-bottom: 48px; font-size: 16px; }
+        .reviews-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 1000px; margin: 0 auto 60px; }
+        .review-card { background: rgba(30, 30, 46, 0.5); border: 1px solid rgba(49, 50, 68, 0.8); border-radius: 20px; padding: 24px; text-align: left; transition: all 0.3s; backdrop-filter: blur(10px); }
+        .review-card:hover { border-color: rgba(137, 180, 250, 0.3); transform: translateY(-4px); }
+        .review-card .stars { color: #f9e2af; font-size: 16px; margin-bottom: 12px; }
+        .review-card .review-text { font-size: 14px; color: #cdd6f4; line-height: 1.7; margin-bottom: 16px; }
+        .review-card .reviewer { font-size: 12px; color: #6c7086; }
+        .review-card .reviewer span { color: #89b4fa; font-weight: bold; }
+        .review-card .plan-tag { display: inline-block; padding: 2px 8px; border-radius: 8px; font-size: 10px; font-weight: bold; margin-left: 8px; }
+        .plan-tag.free { background: #45475a; color: #cdd6f4; }
+        .plan-tag.daily { background: #1e6e3e; color: #a6e3a1; }
+        .no-reviews { color: #6c7086; font-size: 14px; padding: 40px; }
+        .stars-input { display: flex; gap: 8px; margin-bottom: 16px; justify-content: center; }
+        .stars-input span { font-size: 28px; cursor: pointer; filter: grayscale(1); transition: filter 0.1s; }
+        .stars-input span.active { filter: grayscale(0); }
         footer { text-align: center; padding: 40px; color: #45475a; font-size: 13px; border-top: 1px solid rgba(49, 50, 68, 0.5); position: relative; z-index: 1; }
         footer a { color: #6c7086; text-decoration: none; transition: color 0.2s; }
         footer a:hover { color: #89b4fa; }
@@ -97,8 +117,9 @@
             .hero h1 { font-size: 40px; }
             .features-grid { grid-template-columns: 1fr; }
             .pricing-grid { grid-template-columns: 1fr; }
+            .reviews-grid { grid-template-columns: 1fr; }
             .stats { gap: 30px; flex-wrap: wrap; }
-            .features, .pricing, .scripts { padding: 60px 20px; }
+            .features, .pricing, .scripts, .reviews { padding: 60px 20px; }
         }
     </style>
 </head>
@@ -107,13 +128,14 @@
 <div class="bg-gradient"></div>
 
 <nav>
-    <div class="logo">🤖 RobloxAI</div>
+    <div class="logo">🤖 MizoxAI</div>
     <div class="links">
         <a href="#features">Features</a>
         <a href="#pricing">Pricing</a>
         <a href="#usage">Usage</a>
         <a href="#get-key">Get Key</a>
         <a href="#scripts">Scripts</a>
+        <a href="#reviews">Reviews</a>
         <a href="https://discord.com/users/1266831779566981153" target="_blank" class="nav-btn">Contact Us</a>
     </div>
 </nav>
@@ -152,7 +174,7 @@
         <div class="feature-card">
             <span class="icon">🌐</span>
             <h3>Internet Access</h3>
-            <p>AI searches the web in real time — answers questions about news, prices, sports scores and more.</p>
+            <p>AI searches the web in real time — answers questions about news, prices, sports scores and more. <strong style="color:#f38ba8;">Note: search results may be outdated or inaccurate.</strong></p>
         </div>
         <div class="feature-card">
             <span class="icon">🧠</span>
@@ -179,6 +201,9 @@
             <h3>Custom UI Support</h3>
             <p>Don't like the default UI? Use our no-UI script and connect it to your own design completely.</p>
         </div>
+    </div>
+    <div class="disclaimer" style="max-width:1000px; margin: 32px auto 0;">
+        ⚠️ <strong>Disclaimer:</strong> The web search feature uses third-party search engines and most results may be outdated or inaccurate. MizoxAI is not responsible for incorrect information returned by the AI. Always verify important information from reliable sources.
     </div>
 </section>
 
@@ -411,6 +436,7 @@ local chatHistory = {}
 local messageCount = 0
 local isOnCooldown = false
 local cooldownEndTime = 0
+local isVisible = true
 
 local function getTimeRemaining()
     local remaining = cooldownEndTime - os.time()
@@ -427,8 +453,8 @@ screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 420, 0, 420)
-frame.Position = UDim2.new(0.5, -210, 1, -440)
+frame.Size = UDim2.new(0, 420, 0, 490)
+frame.Position = UDim2.new(0.5, -210, 1, -510)
 frame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
 frame.BorderSizePixel = 0
 frame.Parent = screenGui
@@ -436,6 +462,21 @@ frame.Parent = screenGui
 local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0, 12)
 corner.Parent = frame
+
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Size = UDim2.new(0, 44, 0, 44)
+toggleBtn.Position = UDim2.new(0.5, -22, 1, -54)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 80)
+toggleBtn.BorderSizePixel = 0
+toggleBtn.Text = "🤖"
+toggleBtn.TextSize = 22
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.Visible = false
+toggleBtn.Parent = screenGui
+
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.CornerRadius = UDim.new(1, 0)
+toggleCorner.Parent = toggleBtn
 
 local titleBar = Instance.new("Frame")
 titleBar.Size = UDim2.new(1, 0, 0, 40)
@@ -448,7 +489,7 @@ titleCorner.CornerRadius = UDim.new(0, 12)
 titleCorner.Parent = titleBar
 
 local titleLabel = Instance.new("TextLabel")
-titleLabel.Size = UDim2.new(1, -180, 1, 0)
+titleLabel.Size = UDim2.new(1, -210, 1, 0)
 titleLabel.Position = UDim2.new(0, 15, 0, 0)
 titleLabel.BackgroundTransparency = 1
 titleLabel.Text = "🤖 AI Assistant"
@@ -459,8 +500,8 @@ titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 titleLabel.Parent = titleBar
 
 local counterLabel = Instance.new("TextLabel")
-counterLabel.Size = UDim2.new(0, 80, 1, 0)
-counterLabel.Position = UDim2.new(1, -170, 0, 0)
+counterLabel.Size = UDim2.new(0, 60, 1, 0)
+counterLabel.Position = UDim2.new(1, -175, 0, 0)
 counterLabel.BackgroundTransparency = 1
 counterLabel.Text = "0/" .. MESSAGE_LIMIT
 counterLabel.TextColor3 = Color3.fromRGB(150, 150, 200)
@@ -469,23 +510,57 @@ counterLabel.Font = Enum.Font.Gotham
 counterLabel.Parent = titleBar
 
 local clearBtn = Instance.new("TextButton")
-clearBtn.Size = UDim2.new(0, 70, 0, 28)
-clearBtn.Position = UDim2.new(1, -80, 0.5, -14)
+clearBtn.Size = UDim2.new(0, 60, 0, 28)
+clearBtn.Position = UDim2.new(1, -110, 0.5, -14)
 clearBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
 clearBtn.BorderSizePixel = 0
 clearBtn.Text = "🗑 Clear"
 clearBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-clearBtn.TextSize = 12
+clearBtn.TextSize = 11
 clearBtn.Font = Enum.Font.GothamBold
 clearBtn.Parent = titleBar
+
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 32, 0, 28)
+closeBtn.Position = UDim2.new(1, -42, 0.5, -14)
+closeBtn.BackgroundColor3 = Color3.fromRGB(100, 50, 50)
+closeBtn.BorderSizePixel = 0
+closeBtn.Text = "✕"
+closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeBtn.TextSize = 13
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.Parent = titleBar
+
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 6)
+closeCorner.Parent = closeBtn
 
 local clearCorner = Instance.new("UICorner")
 clearCorner.CornerRadius = UDim.new(0, 6)
 clearCorner.Parent = clearBtn
 
+local infoBar = Instance.new("Frame")
+infoBar.Size = UDim2.new(1, 0, 0, 28)
+infoBar.Position = UDim2.new(0, 0, 0, 40)
+infoBar.BackgroundColor3 = Color3.fromRGB(25, 25, 50)
+infoBar.BorderSizePixel = 0
+infoBar.Parent = frame
+
+local infoLabel = Instance.new("TextLabel")
+infoLabel.Size = UDim2.new(1, -16, 1, 0)
+infoLabel.Position = UDim2.new(0, 8, 0, 0)
+infoLabel.BackgroundTransparency = 1
+infoLabel.Text = "🌐 Internet access (info may be outdated/wrong)  •  Use \"quotes\" for exact search"
+infoLabel.TextColor3 = Color3.fromRGB(100, 100, 150)
+infoLabel.TextSize = 10
+infoLabel.Font = Enum.Font.Gotham
+infoLabel.TextXAlignment = Enum.TextXAlignment.Left
+infoLabel.TextTruncate = Enum.TextTruncate.AtEnd
+infoLabel.Parent = infoBar
+
 local scrollFrame = Instance.new("ScrollingFrame")
 scrollFrame.Size = UDim2.new(1, -10, 0, 280)
-scrollFrame.Position = UDim2.new(0, 5, 0, 48)
+scrollFrame.Position = UDim2.new(0, 5, 0, 76)
 scrollFrame.BackgroundTransparency = 1
 scrollFrame.BorderSizePixel = 0
 scrollFrame.ScrollBarThickness = 4
@@ -561,6 +636,18 @@ cooldownLabel.Font = Enum.Font.GothamBold
 cooldownLabel.TextWrapped = true
 cooldownLabel.ZIndex = 11
 cooldownLabel.Parent = cooldownOverlay
+
+closeBtn.MouseButton1Click:Connect(function()
+    isVisible = false
+    frame.Visible = false
+    toggleBtn.Visible = true
+end)
+
+toggleBtn.MouseButton1Click:Connect(function()
+    isVisible = true
+    frame.Visible = true
+    toggleBtn.Visible = false
+end)
 
 local function updateCooldownDisplay()
     if isOnCooldown then
@@ -666,7 +753,7 @@ local function activateCooldown()
     cooldownEndTime = os.time() + (COOLDOWN_HOURS * 3600)
     saveHistory()
     updateCooldownDisplay()
-    addBubble("⚠️ System", "You've reached the " .. MESSAGE_LIMIT .. " message daily limit! Come back in " .. COOLDOWN_HOURS .. " hours.", false)
+    addBubble("⚠️ System", "You've reached the " .. MESSAGE_LIMIT .. " message daily limit! Come back in 24 hours.", false)
 end
 
 local isSending = false
@@ -691,12 +778,24 @@ local function sendMessage()
         activateCooldown()
         return
     end
-    addBubble("🤖 Assistant", "Thinking...", false)
+    local thinkingBubble = Instance.new("Frame")
+    thinkingBubble.Size = UDim2.new(1, 0, 0, 0)
+    thinkingBubble.AutomaticSize = Enum.AutomaticSize.Y
+    thinkingBubble.BackgroundTransparency = 1
+    thinkingBubble.Parent = scrollFrame
+    local thinkLabel = Instance.new("TextLabel")
+    thinkLabel.Size = UDim2.new(1, 0, 0, 30)
+    thinkLabel.BackgroundTransparency = 1
+    thinkLabel.Text = "🤖 Thinking..."
+    thinkLabel.TextColor3 = Color3.fromRGB(150, 150, 200)
+    thinkLabel.TextSize = 13
+    thinkLabel.Font = Enum.Font.GothamBold
+    thinkLabel.TextXAlignment = Enum.TextXAlignment.Left
+    thinkLabel.Parent = thinkingBubble
+    task.wait(0.05)
+    scrollFrame.CanvasPosition = Vector2.new(0, scrollFrame.AbsoluteCanvasSize.Y)
     local reply = chatFunction:InvokeServer(message)
-    local bubbles = scrollFrame:GetChildren()
-    for i = #bubbles, 1, -1 do
-        if bubbles[i]:IsA("Frame") then bubbles[i]:Destroy() break end
-    end
+    thinkingBubble:Destroy()
     addBubble("🤖 Assistant", reply, false)
     table.insert(chatHistory, {sender = "🤖 Assistant", text = reply, isUser = false})
     saveHistory()
@@ -750,6 +849,7 @@ loadHistory()
 
 if #chatHistory == 0 and not isOnCooldown then
     addBubble("🤖 Assistant", "Hey " .. player.Name .. "! I'm your AI assistant. Ask me anything! (" .. MESSAGE_LIMIT .. " messages per day)", false)
+    addBubble("ℹ️ Info", "I have internet access but WARNING: most search results may be outdated or wrong! Use \"quotes\" for exact search. Always double-check important info.", false)
 end</pre>
     </div>
 
@@ -761,7 +861,7 @@ end</pre>
             </div>
             <button class="copy-script-btn" onclick="copyScript('noUiScript', this)">📋 Copy</button>
         </div>
-        <pre id="noUiScript">-- RobloxAI — No UI Script
+        <pre id="noUiScript">-- MizoxAI — No UI Script
 -- Requires Script 1 in ServerScriptService
 
 local Players = game:GetService("Players")
@@ -907,11 +1007,154 @@ loadHistory()
     </div>
 </section>
 
+<!-- REVIEWS SECTION -->
+<section class="reviews" id="reviews">
+    <div class="section-label">Reviews</div>
+    <h2>What Developers Say</h2>
+    <p>Only users with an active free trial or paid plan can leave a review</p>
+
+    <div class="reviews-grid" id="reviewsGrid">
+        <div class="no-reviews" style="grid-column: 1/-1;">Loading reviews...</div>
+    </div>
+
+    <div class="form-box" style="max-width:520px;">
+        <div id="reviewEligibleBox">
+            <div id="reviewFormInner">
+                <div class="section-label" style="margin-bottom:16px;">Leave a Review</div>
+                <input type="text" id="reviewName" placeholder="Your name or username" maxlength="30" />
+                <div class="stars-input" id="starsInput">
+                    <span data-val="1">⭐</span>
+                    <span data-val="2">⭐</span>
+                    <span data-val="3">⭐</span>
+                    <span data-val="4">⭐</span>
+                    <span data-val="5">⭐</span>
+                </div>
+                <textarea id="reviewText" rows="3" placeholder="Write your review... (max 300 characters)" maxlength="300"></textarea>
+                <button onclick="submitReview()">⭐ Submit Review</button>
+            </div>
+            <div id="reviewMsg" style="display:none; margin-top:16px; font-size:14px; text-align:center;"></div>
+        </div>
+        <div id="reviewNotEligible" style="display:none;">
+            <div class="notice" style="text-align:center;">
+                🔒 You need an active free trial or paid plan to leave a review.<br>
+                <a href="#get-key">Get your free trial key →</a>
+            </div>
+        </div>
+    </div>
+</section>
+
 <footer>
-    <p>🤖 RobloxAI — AI chatbot for Roblox games &nbsp;•&nbsp; <a href="https://discord.com/users/1266831779566981153" target="_blank">Contact on Discord</a></p>
+    <p>🤖 MizoxAI — AI chatbot for Roblox games &nbsp;•&nbsp; <a href="https://discord.com/users/1266831779566981153" target="_blank">Contact on Discord</a></p>
 </footer>
 
 <script>
+    const API = "https://roblox-ai-server-11uh.onrender.com"
+    let selectedRating = 0
+
+    // Star rating
+    document.querySelectorAll('#starsInput span').forEach(star => {
+        star.addEventListener('mouseover', () => {
+            const val = parseInt(star.dataset.val)
+            document.querySelectorAll('#starsInput span').forEach((s, i) => {
+                s.classList.toggle('active', i < val)
+            })
+        })
+        star.addEventListener('mouseout', () => {
+            document.querySelectorAll('#starsInput span').forEach((s, i) => {
+                s.classList.toggle('active', i < selectedRating)
+            })
+        })
+        star.addEventListener('click', () => {
+            selectedRating = parseInt(star.dataset.val)
+            document.querySelectorAll('#starsInput span').forEach((s, i) => {
+                s.classList.toggle('active', i < selectedRating)
+            })
+        })
+    })
+
+    async function loadReviews() {
+        try {
+            const res = await fetch(`${API}/reviews`)
+            const data = await res.json()
+            const grid = document.getElementById('reviewsGrid')
+            if (!data.data || data.data.length === 0) {
+                grid.innerHTML = '<div class="no-reviews" style="grid-column:1/-1;">No reviews yet — be the first!</div>'
+                return
+            }
+            grid.innerHTML = data.data.map(r => `
+                <div class="review-card">
+                    <div class="stars">${'⭐'.repeat(r.rating)}</div>
+                    <div class="review-text">"${r.review_text}"</div>
+                    <div class="reviewer">
+                        <span>${r.reviewer_name}</span>
+                        <span class="plan-tag ${r.plan}">${r.plan.toUpperCase()}</span>
+                        <span style="float:right; color:#45475a;">${r.created_at}</span>
+                    </div>
+                </div>
+            `).join('')
+        } catch(e) {
+            document.getElementById('reviewsGrid').innerHTML = '<div class="no-reviews" style="grid-column:1/-1;">Could not load reviews.</div>'
+        }
+    }
+
+    async function checkReviewEligibility() {
+        try {
+            const res = await fetch(`${API}/check-eligible`)
+            const data = await res.json()
+            if (!data.eligible) {
+                document.getElementById('reviewFormInner').style.display = 'none'
+                document.getElementById('reviewNotEligible').style.display = 'block'
+            } else if (data.already_reviewed) {
+                document.getElementById('reviewFormInner').style.display = 'none'
+                document.getElementById('reviewMsg').style.display = 'block'
+                document.getElementById('reviewMsg').innerHTML = '✅ You have already submitted a review. Thank you!'
+                document.getElementById('reviewMsg').style.color = '#a6e3a1'
+            }
+        } catch(e) {}
+    }
+
+    async function submitReview() {
+        const name = document.getElementById('reviewName').value.trim()
+        const text = document.getElementById('reviewText').value.trim()
+        if (!name) { alert('Please enter your name!'); return }
+        if (!selectedRating) { alert('Please select a star rating!'); return }
+        if (!text) { alert('Please write a review!'); return }
+        const btn = document.querySelector('#reviewFormInner button')
+        btn.textContent = 'Submitting...'
+        btn.disabled = true
+        try {
+            const res = await fetch(`${API}/review`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({reviewer_name: name, rating: selectedRating, review_text: text})
+            })
+            const data = await res.json()
+            if (data.status === 'success') {
+                document.getElementById('reviewFormInner').style.display = 'none'
+                document.getElementById('reviewMsg').style.display = 'block'
+                document.getElementById('reviewMsg').innerHTML = '✅ Review submitted! Thank you!'
+                document.getElementById('reviewMsg').style.color = '#a6e3a1'
+                loadReviews()
+            } else if (data.message === 'already_reviewed') {
+                document.getElementById('reviewMsg').style.display = 'block'
+                document.getElementById('reviewMsg').innerHTML = '⚠️ You have already submitted a review!'
+                document.getElementById('reviewMsg').style.color = '#f9e2af'
+                document.getElementById('reviewFormInner').style.display = 'none'
+            } else if (data.message === 'not_eligible') {
+                document.getElementById('reviewFormInner').style.display = 'none'
+                document.getElementById('reviewNotEligible').style.display = 'block'
+            } else {
+                alert('Error: ' + data.message)
+                btn.textContent = '⭐ Submit Review'
+                btn.disabled = false
+            }
+        } catch(e) {
+            alert('Could not connect to server. Try again!')
+            btn.textContent = '⭐ Submit Review'
+            btn.disabled = false
+        }
+    }
+
     async function getKey() {
         const gameName = document.getElementById("gameName").value.trim()
         if (!gameName) { alert("Please enter your game name!"); return }
@@ -921,7 +1164,7 @@ loadHistory()
         document.getElementById("resultBox").style.display = "none"
         document.getElementById("errorBox").style.display = "none"
         try {
-            const response = await fetch("https://roblox-ai-server-11uh.onrender.com/register", {
+            const response = await fetch(`${API}/register`, {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({game_name: gameName, plan: "free"})
@@ -954,7 +1197,7 @@ loadHistory()
         document.getElementById("usageResult").style.display = "none"
         document.getElementById("usageError").style.display = "none"
         try {
-            const response = await fetch(`https://roblox-ai-server-11uh.onrender.com/usage/${key}`)
+            const response = await fetch(`${API}/usage/${key}`)
             const data = await response.json()
             if (data.status === "success") {
                 const d = data.data
@@ -1011,12 +1254,16 @@ loadHistory()
         })
     }, { threshold: 0.1 })
 
-    document.querySelectorAll('.feature-card, .price-card, .script-card').forEach(el => {
+    document.querySelectorAll('.feature-card, .price-card, .script-card, .review-card').forEach(el => {
         el.style.opacity = '0'
         el.style.transform = 'translateY(20px)'
         el.style.transition = 'opacity 0.5s ease, transform 0.5s ease'
         observer.observe(el)
     })
+
+    // Load reviews and check eligibility on page load
+    loadReviews()
+    checkReviewEligibility()
 </script>
 
 </body>
