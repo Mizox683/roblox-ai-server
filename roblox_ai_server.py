@@ -7,7 +7,7 @@ import json
 import hashlib
 import os
 import threading
-from datetime import datetime
+from datetime import datetime, timedelta
 import urllib.parse
 from bs4 import BeautifulSoup
 
@@ -22,6 +22,7 @@ def add_headers(response):
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
 TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY", "")
+ADMIN_SECRET = os.environ.get("ADMIN_SECRET", "mizox_admin_2024")
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 PLANS = {
@@ -252,6 +253,10 @@ def save_conversation_history(api_key, player_name, history):
 def home():
     return render_template("index.html")
 
+@app.route("/admin-panel", methods=["GET"])
+def admin_panel_page():
+    return render_template("admin.html")
+
 @app.route("/register", methods=["POST"])
 def register():
     data = request.json
@@ -294,6 +299,11 @@ def register():
         cur2.execute(
             "INSERT INTO ip_registrations (ip_address, api_key, game_name) VALUES (%s, %s, %s)",
             (ip, api_key, game_name)
+        )
+        # Add to customers table too for tracking
+        cur2.execute(
+            "INSERT INTO customers (api_key, game_name, plan) VALUES (%s, %s, %s)",
+            (api_key, game_name, "free")
         )
     conn.commit()
     cur2.close()
@@ -473,6 +483,229 @@ def usage(api_key):
         "messages_remaining": client["messages_limit"] - client["messages_used"],
     })
 
+@app.route("/stats", methods=["GET"])
+def stats():
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("SELECT COUNT(*) as total_games FROM clients")
+    games = cur.fetchone()
+    cur.execute("SELECT SUM(messages_used) as total_messages FROM clients")
+    messages = cur.fetchone()
+    cur.close()
+    conn.close()
+    return success({
+        "total_games": games["total_games"] or 0,
+        "total_messages": messages["total_messages"] or 0
+    })
+
+@app.route("/review", methods=["POST"])
+def add_review():
+    data = request.json
+    reviewer_name = data.get("reviewer_name", "").strip()
+    rating = data.get("rating")
+    review_text = data.get("review_text", "").strip()
+
+    if not reviewer_name or not rating or not review_text:
+        return error("Name, rating and review are required")
+    if not isinstance(rating, int) or rating < 1 or rating > 5:
+        return error("Rating must be between 1 and 5")
+    if len(review_text) > 300:
+        return error("Review must be under 300 characters")
+
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr)
+    if ip and "," in ip:
+        ip = ip.split(",")[0].strip()
+
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("SELECT * FROM ip_registrations WHERE ip_address=%s", (ip,))
+    registered = cur.fetchone()
+
+    if not registered:
+        cur.close()
+        conn.close()
+        return jsonify({"status": "error", "message": "not_eligible"}), 403
+
+    cur.execute("SELECT * FROM reviews WHERE ip_address=%s", (ip,))
+    existing = cur.fetchone()
+    if existing:
+        cur.close()
+        conn.close()
+        return jsonify({"status": "error", "message": "already_reviewed"}), 403
+
+    plan = "free"
+    cur2 = conn.cursor()
+    cur2.execute(
+        "INSERT INTO reviews (ip_address, reviewer_name, rating, review_text, plan) VALUES (%s, %s, %s, %s, %s)",
+        (ip, reviewer_name, rating, review_text, plan)
+    )
+    conn.commit()
+    cur2.close()
+    cur.close()
+    conn.close()
+    return success({"reviewer_name": reviewer_name, "rating": rating}, "Review added!")
+
+@app.route("/reviews", methods=["GET"])
+def get_reviews():
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("SELECT reviewer_name, rating, review_text, plan, created_at FROM reviews ORDER BY created_at DESC")
+    reviews = cur.fetchall()
+    cur.close()
+    conn.close()
+    result = []
+    for r in reviews:
+        result.append({
+            "reviewer_name": r["reviewer_name"],
+            "rating": r["rating"],
+            "review_text": r["review_text"],
+            "plan": r["plan"],
+            "created_at": r["created_at"].strftime("%B %d, %Y")
+        })
+    return jsonify({"status": "success", "data": result})
+
+@app.route("/check-eligible", methods=["GET"])
+def check_eligible():
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr)
+    if ip and "," in ip:
+        ip = ip.split(",")[0].strip()
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("SELECT * FROM ip_registrations WHERE ip_address=%s", (ip,))
+    registered = cur.fetchone()
+    cur.execute("SELECT * FROM reviews WHERE ip_address=%s", (ip,))
+    already_reviewed = cur.fetchone()
+    cur.close()
+    conn.close()
+    return jsonify({
+        "eligible": bool(registered),
+        "already_reviewed": bool(already_reviewed)
+    })
+
+@app.route("/admin-data", methods=["GET"])
+def admin_data():
+    secret = request.args.get("secret", "")
+    if secret != ADMIN_SECRET:
+        return error("Unauthorized", 401)
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("""
+        SELECT c.api_key, c.game_name, c.plan, c.messages_used, c.messages_limit, c.created_at,
+               cu.discord_username, cu.expires_at, cu.active
+        FROM clients c
+        LEFT JOIN customers cu ON c.api_key = cu.api_key
+        ORDER BY c.created_at DESC
+    """)
+    customers = cur.fetchall()
+    cur.execute("SELECT SUM(messages_used) as t FROM clients")
+    total = cur.fetchone()
+    cur.close()
+    conn.close()
+    result = []
+    for c in customers:
+        result.append({
+            "api_key": c["api_key"],
+            "game_name": c["game_name"],
+            "plan": c["plan"],
+            "messages_used": c["messages_used"],
+            "messages_limit": c["messages_limit"],
+            "created_at": c["created_at"].isoformat() if c["created_at"] else None,
+            "discord_username": c["discord_username"],
+            "expires_at": c["expires_at"].isoformat() if c["expires_at"] else None,
+            "active": c["active"]
+        })
+    return jsonify({"status": "success", "data": {"customers": result, "total_messages": total["t"] or 0}})
+
+@app.route("/admin-generate", methods=["POST"])
+def admin_generate():
+    data = request.json
+    if data.get("secret") != ADMIN_SECRET:
+        return error("Unauthorized", 401)
+    game_name = data.get("game_name", "").strip()
+    discord_username = data.get("discord_username", "").strip()
+    if not game_name or not discord_username:
+        return error("Game name and Discord username required")
+    api_key = generate_key(game_name)
+    limit = PLANS["daily"]["messages"]
+    expires_at = datetime.now() + timedelta(days=30)
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO clients (api_key, game_name, plan, messages_limit) VALUES (%s, %s, %s, %s)",
+        (api_key, game_name, "daily", limit)
+    )
+    cur.execute(
+        "INSERT INTO customers (api_key, discord_username, game_name, plan, expires_at) VALUES (%s, %s, %s, %s, %s)",
+        (api_key, discord_username, game_name, "daily", expires_at)
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+    return jsonify({
+        "api_key": api_key,
+        "game_name": game_name,
+        "discord_username": discord_username,
+        "plan": "daily",
+        "expires_at": expires_at.isoformat()
+    })
+
+@app.route("/admin-renew", methods=["POST"])
+def admin_renew():
+    data = request.json
+    if data.get("secret") != ADMIN_SECRET:
+        return error("Unauthorized", 401)
+    api_key = data.get("api_key")
+    if not api_key:
+        return error("api_key required")
+    new_expiry = datetime.now() + timedelta(days=30)
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE clients SET messages_used=0, messages_limit=%s WHERE api_key=%s",
+        (PLANS["daily"]["messages"], api_key)
+    )
+    cur.execute(
+        "UPDATE customers SET expires_at=%s, active=TRUE, expiry_email_sent=FALSE WHERE api_key=%s",
+        (new_expiry, api_key)
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+    return success({"expires_at": new_expiry.isoformat()}, "Renewed for 30 days!")
+
+@app.route("/admin-disable", methods=["POST"])
+def admin_disable():
+    data = request.json
+    if data.get("secret") != ADMIN_SECRET:
+        return error("Unauthorized", 401)
+    api_key = data.get("api_key")
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("UPDATE clients SET messages_limit=0 WHERE api_key=%s", (api_key,))
+    cur.execute("UPDATE customers SET active=FALSE WHERE api_key=%s", (api_key,))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return success({}, "Key disabled!")
+
+@app.route("/admin-enable", methods=["POST"])
+def admin_enable():
+    data = request.json
+    if data.get("secret") != ADMIN_SECRET:
+        return error("Unauthorized", 401)
+    api_key = data.get("api_key")
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE clients SET messages_limit=%s WHERE api_key=%s",
+        (PLANS["daily"]["messages"], api_key)
+    )
+    cur.execute("UPDATE customers SET active=TRUE WHERE api_key=%s", (api_key,))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return success({}, "Key enabled!")
+
 @app.route("/", methods=["GET"])
 def dashboard():
     conn = get_db()
@@ -525,258 +758,6 @@ def dashboard():
         + rows +
         "</table></body></html>"
     )
-
-@app.route("/review", methods=["POST"])
-def add_review():
-    data = request.json
-    reviewer_name = data.get("reviewer_name", "").strip()
-    rating = data.get("rating")
-    review_text = data.get("review_text", "").strip()
-
-    if not reviewer_name or not rating or not review_text:
-        return error("Name, rating and review are required")
-    if not isinstance(rating, int) or rating < 1 or rating > 5:
-        return error("Rating must be between 1 and 5")
-    if len(review_text) > 300:
-        return error("Review must be under 300 characters")
-
-    ip = request.headers.get("X-Forwarded-For", request.remote_addr)
-    if ip and "," in ip:
-        ip = ip.split(",")[0].strip()
-
-    conn = get_db()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-
-    # Check if IP has a registered key (free or paid)
-    cur.execute("SELECT * FROM ip_registrations WHERE ip_address=%s", (ip,))
-    registered = cur.fetchone()
-
-    # Also check if IP has a paid key by matching against clients
-    cur.execute("SELECT * FROM clients WHERE plan='daily' AND api_key IN (SELECT api_key FROM ip_registrations WHERE ip_address=%s)", (ip,))
-    paid = cur.fetchone()
-
-    if not registered and not paid:
-        # Check if any client was registered from this IP via paid plan
-        cur.execute("SELECT * FROM clients WHERE plan='daily'")
-        all_paid = cur.fetchall()
-        cur.close()
-        conn.close()
-        return jsonify({"status": "error", "message": "not_eligible"}), 403
-
-    # Check if already reviewed
-    cur.execute("SELECT * FROM reviews WHERE ip_address=%s", (ip,))
-    existing = cur.fetchone()
-    if existing:
-        cur.close()
-        conn.close()
-        return jsonify({"status": "error", "message": "already_reviewed"}), 403
-
-    plan = "daily" if paid else "free"
-    cur2 = conn.cursor()
-    cur2.execute(
-        "INSERT INTO reviews (ip_address, reviewer_name, rating, review_text, plan) VALUES (%s, %s, %s, %s, %s)",
-        (ip, reviewer_name, rating, review_text, plan)
-    )
-    conn.commit()
-    cur2.close()
-    cur.close()
-    conn.close()
-    return success({"reviewer_name": reviewer_name, "rating": rating}, "Review added!")
-
-@app.route("/reviews", methods=["GET"])
-def get_reviews():
-    conn = get_db()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute("SELECT reviewer_name, rating, review_text, plan, created_at FROM reviews ORDER BY created_at DESC")
-    reviews = cur.fetchall()
-    cur.close()
-    conn.close()
-    result = []
-    for r in reviews:
-        result.append({
-            "reviewer_name": r["reviewer_name"],
-            "rating": r["rating"],
-            "review_text": r["review_text"],
-            "plan": r["plan"],
-            "created_at": r["created_at"].strftime("%B %d, %Y")
-        })
-    return jsonify({"status": "success", "data": result})
-
-@app.route("/check-eligible", methods=["GET"])
-def check_eligible():
-    ip = request.headers.get("X-Forwarded-For", request.remote_addr)
-    if ip and "," in ip:
-        ip = ip.split(",")[0].strip()
-    conn = get_db()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute("SELECT * FROM ip_registrations WHERE ip_address=%s", (ip,))
-    registered = cur.fetchone()
-    cur.execute("SELECT * FROM reviews WHERE ip_address=%s", (ip,))
-    already_reviewed = cur.fetchone()
-    cur.close()
-    conn.close()
-    return jsonify({
-        "eligible": bool(registered),
-        "already_reviewed": bool(already_reviewed)
-    })
-
-
-@app.route("/stats", methods=["GET"])
-def stats():
-    conn = get_db()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute("SELECT COUNT(*) as total_games FROM clients")
-    games = cur.fetchone()
-    cur.execute("SELECT SUM(messages_used) as total_messages FROM clients")
-    messages = cur.fetchone()
-    cur.close()
-    conn.close()
-    return success({
-        "total_games": games["total_games"] or 0,
-        "total_messages": messages["total_messages"] or 0
-    })
-
-
-@app.route("/disable/<api_key>", methods=["POST"])
-def disable_key(api_key):
-    conn = get_db()
-    cur = conn.cursor()
-    # Set messages_limit to 0 to effectively disable
-    cur.execute("UPDATE clients SET messages_limit=0 WHERE api_key=%s", (api_key,))
-    conn.commit()
-    cur.close()
-    conn.close()
-    return success({"api_key": api_key}, "Key disabled!")
-
-@app.route("/enable/<api_key>", methods=["POST"])
-def enable_key(api_key):
-    conn = get_db()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute("SELECT plan FROM clients WHERE api_key=%s", (api_key,))
-    client = cur.fetchone()
-    if not client:
-        cur.close()
-        conn.close()
-        return error("Key not found", 404)
-    limit = PLANS.get(client["plan"], PLANS["free"])["messages"]
-    cur2 = conn.cursor()
-    cur2.execute("UPDATE clients SET messages_limit=%s, messages_used=0 WHERE api_key=%s", (limit, api_key))
-    conn.commit()
-    cur2.close()
-    cur.close()
-    conn.close()
-    return success({"api_key": api_key}, "Key enabled and messages reset!")
-
-
-@app.route("/admin-data", methods=["GET"])
-def admin_data():
-    secret = request.args.get("secret", "")
-    if secret != os.environ.get("ADMIN_SECRET", "mizox_admin_2024"):
-        return error("Unauthorized", 401)
-    conn = get_db()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute("""
-        SELECT c.api_key, c.game_name, c.plan, c.messages_used, c.messages_limit, c.created_at,
-               cu.discord_username, cu.expires_at, cu.active
-        FROM clients c
-        LEFT JOIN customers cu ON c.api_key = cu.api_key
-        ORDER BY c.created_at DESC
-    """)
-    customers = cur.fetchall()
-    cur.execute("SELECT SUM(messages_used) as t FROM clients")
-    total = cur.fetchone()
-    cur.close()
-    conn.close()
-    result = []
-    for c in customers:
-        result.append({
-            "api_key": c["api_key"],
-            "game_name": c["game_name"],
-            "plan": c["plan"],
-            "messages_used": c["messages_used"],
-            "messages_limit": c["messages_limit"],
-            "created_at": c["created_at"].isoformat() if c["created_at"] else None,
-            "discord_username": c["discord_username"],
-            "expires_at": c["expires_at"].isoformat() if c["expires_at"] else None,
-            "active": c["active"]
-        })
-    return jsonify({"status": "success", "data": {"customers": result, "total_messages": total["t"] or 0}})
-
-@app.route("/admin-generate", methods=["POST"])
-def admin_generate():
-    data = request.json
-    if data.get("secret") != os.environ.get("ADMIN_SECRET", "mizox_admin_2024"):
-        return error("Unauthorized", 401)
-    game_name = data.get("game_name", "").strip()
-    discord_username = data.get("discord_username", "").strip()
-    if not game_name or not discord_username:
-        return error("Game name and Discord username required")
-    api_key = generate_key(game_name)
-    limit = PLANS["daily"]["messages"]
-    expires_at = datetime.now() + timedelta(days=30)
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute(
-        "INSERT INTO clients (api_key, game_name, plan, messages_limit) VALUES (%s, %s, %s, %s)",
-        (api_key, game_name, "daily", limit)
-    )
-    cur.execute(
-        "INSERT INTO customers (api_key, discord_username, game_name, plan, expires_at) VALUES (%s, %s, %s, %s, %s)",
-        (api_key, discord_username, game_name, "daily", expires_at)
-    )
-    conn.commit()
-    cur.close()
-    conn.close()
-    return jsonify({"api_key": api_key, "game_name": game_name, "discord_username": discord_username, "plan": "daily", "expires_at": expires_at.isoformat()})
-
-@app.route("/admin-renew", methods=["POST"])
-def admin_renew():
-    data = request.json
-    if data.get("secret") != os.environ.get("ADMIN_SECRET", "mizox_admin_2024"):
-        return error("Unauthorized", 401)
-    api_key = data.get("api_key")
-    if not api_key:
-        return error("api_key required")
-    new_expiry = datetime.now() + timedelta(days=30)
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("UPDATE clients SET messages_used=0, messages_limit=%s WHERE api_key=%s", (PLANS["daily"]["messages"], api_key))
-    cur.execute("UPDATE customers SET expires_at=%s, active=TRUE, expiry_email_sent=FALSE WHERE api_key=%s", (new_expiry, api_key))
-    conn.commit()
-    cur.close()
-    conn.close()
-    return success({"expires_at": new_expiry.isoformat()}, "Renewed for 30 days!")
-
-@app.route("/admin-disable", methods=["POST"])
-def admin_disable():
-    data = request.json
-    if data.get("secret") != os.environ.get("ADMIN_SECRET", "mizox_admin_2024"):
-        return error("Unauthorized", 401)
-    api_key = data.get("api_key")
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("UPDATE clients SET messages_limit=0 WHERE api_key=%s", (api_key,))
-    cur.execute("UPDATE customers SET active=FALSE WHERE api_key=%s", (api_key,))
-    conn.commit()
-    cur.close()
-    conn.close()
-    return success({}, "Key disabled!")
-
-@app.route("/admin-enable", methods=["POST"])
-def admin_enable():
-    data = request.json
-    if data.get("secret") != os.environ.get("ADMIN_SECRET", "mizox_admin_2024"):
-        return error("Unauthorized", 401)
-    api_key = data.get("api_key")
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("UPDATE clients SET messages_limit=%s WHERE api_key=%s", (PLANS["daily"]["messages"], api_key))
-    cur.execute("UPDATE customers SET active=TRUE WHERE api_key=%s", (api_key,))
-    conn.commit()
-    cur.close()
-    conn.close()
-    return success({}, "Key enabled!")
-
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
