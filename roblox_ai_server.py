@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import sqlite3
+import psycopg2
+import psycopg2.extras
 import requests
 import json
 import hashlib
@@ -17,10 +18,10 @@ def add_headers(response):
     response.headers["ngrok-skip-browser-warning"] = "true"
     return response
 
-# API key stored in environment variable — never hardcode it!
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
+DATABASE_URL = os.environ.get("DATABASE_URL", "")
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-DB = "roblox_ai.db"
+
 PLANS = {
     "free":     {"messages": 500,     "price": 0},
     "starter":  {"messages": 10000,   "price": 7.50},
@@ -32,38 +33,45 @@ PLANS = {
 OVERAGE_RATE = 0.00046
 
 def get_db():
-    conn = sqlite3.connect(DB)
-    conn.row_factory = sqlite3.Row
+    conn = psycopg2.connect(DATABASE_URL, sslmode="require")
     return conn
 
 def init_db():
-    with get_db() as db:
-        db.executescript("""
-            CREATE TABLE IF NOT EXISTS clients (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                api_key TEXT UNIQUE NOT NULL,
-                game_name TEXT,
-                plan TEXT DEFAULT 'free',
-                messages_used INTEGER DEFAULT 0,
-                messages_limit INTEGER DEFAULT 500,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP
-            );
-            CREATE TABLE IF NOT EXISTS usage_log (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                api_key TEXT,
-                player_name TEXT,
-                message TEXT,
-                response TEXT,
-                timestamp TEXT DEFAULT CURRENT_TIMESTAMP
-            );
-            CREATE TABLE IF NOT EXISTS conversations (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                api_key TEXT,
-                player_name TEXT,
-                history TEXT DEFAULT '[]',
-                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-            );
-        """)
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS clients (
+            id SERIAL PRIMARY KEY,
+            api_key TEXT UNIQUE NOT NULL,
+            game_name TEXT,
+            plan TEXT DEFAULT 'free',
+            messages_used INTEGER DEFAULT 0,
+            messages_limit INTEGER DEFAULT 500,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS usage_log (
+            id SERIAL PRIMARY KEY,
+            api_key TEXT,
+            player_name TEXT,
+            message TEXT,
+            response TEXT,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS conversations (
+            id SERIAL PRIMARY KEY,
+            api_key TEXT,
+            player_name TEXT,
+            history TEXT DEFAULT '[]',
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """)
+    conn.commit()
+    cur.close()
+    conn.close()
 
 init_db()
 
@@ -72,8 +80,13 @@ def generate_key(game_name):
     return "rai_" + hashlib.sha256(raw.encode()).hexdigest()[:24]
 
 def get_client(api_key):
-    with get_db() as db:
-        return db.execute("SELECT * FROM clients WHERE api_key=?", (api_key,)).fetchone()
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("SELECT * FROM clients WHERE api_key=%s", (api_key,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    return row
 
 def success(data=None, message="OK"):
     return jsonify({"status": "success", "message": message, "data": data})
@@ -87,38 +100,30 @@ def web_search(query):
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Accept-Language": "en-US,en;q=0.9",
         }
-
         results = []
-
-        # Try Google first
         encoded = urllib.parse.quote(query)
+
         google_url = f"https://www.google.com/search?q={encoded}&num=5"
         google_resp = requests.get(google_url, headers=headers, timeout=6)
         soup = BeautifulSoup(google_resp.text, "html.parser")
 
-        # Get featured snippet
         featured = soup.select_one("div.BNeawe")
         if featured:
             results.append(f"FEATURED: {featured.get_text()[:300]}")
 
-        # Get search result snippets
         for div in soup.select("div.VwiC3b")[:5]:
             text = div.get_text(strip=True)
             if text and len(text) > 30:
                 results.append(text[:200])
 
-        # Get knowledge panel
         for span in soup.select("span.hgKElc")[:2]:
             text = span.get_text(strip=True)
             if text:
                 results.append(f"FACT: {text[:200]}")
 
         if results:
-            combined = " | ".join(results)
-            print(f"✅ Google search results: {combined[:200]}...")
-            return combined
+            return " | ".join(results)
 
-        # Fallback to DuckDuckGo
         ddg_url = f"https://html.duckduckgo.com/html/?q={encoded}"
         ddg_resp = requests.get(ddg_url, headers=headers, timeout=6)
         ddg_soup = BeautifulSoup(ddg_resp.text, "html.parser")
@@ -134,17 +139,20 @@ def web_search(query):
             return " | ".join(results)
 
         return ""
-
     except Exception as e:
         print(f"Search error: {e}")
         return ""
 
 def get_conversation_history(api_key, player_name):
-    with get_db() as db:
-        row = db.execute(
-            "SELECT history FROM conversations WHERE api_key=? AND player_name=?",
-            (api_key, player_name)
-        ).fetchone()
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute(
+        "SELECT history FROM conversations WHERE api_key=%s AND player_name=%s",
+        (api_key, player_name)
+    )
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
     if row:
         return json.loads(row["history"])
     return []
@@ -152,21 +160,26 @@ def get_conversation_history(api_key, player_name):
 def save_conversation_history(api_key, player_name, history):
     if len(history) > 50:
         history = history[-50:]
-    with get_db() as db:
-        existing = db.execute(
-            "SELECT id FROM conversations WHERE api_key=? AND player_name=?",
-            (api_key, player_name)
-        ).fetchone()
-        if existing:
-            db.execute(
-                "UPDATE conversations SET history=?, updated_at=? WHERE api_key=? AND player_name=?",
-                (json.dumps(history), datetime.now().isoformat(), api_key, player_name)
-            )
-        else:
-            db.execute(
-                "INSERT INTO conversations (api_key, player_name, history) VALUES (?, ?, ?)",
-                (api_key, player_name, json.dumps(history))
-            )
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT id FROM conversations WHERE api_key=%s AND player_name=%s",
+        (api_key, player_name)
+    )
+    existing = cur.fetchone()
+    if existing:
+        cur.execute(
+            "UPDATE conversations SET history=%s, updated_at=%s WHERE api_key=%s AND player_name=%s",
+            (json.dumps(history), datetime.now(), api_key, player_name)
+        )
+    else:
+        cur.execute(
+            "INSERT INTO conversations (api_key, player_name, history) VALUES (%s, %s, %s)",
+            (api_key, player_name, json.dumps(history))
+        )
+    conn.commit()
+    cur.close()
+    conn.close()
 
 @app.route("/register", methods=["POST"])
 def register():
@@ -179,11 +192,15 @@ def register():
         return error("Invalid plan")
     api_key = generate_key(game_name)
     limit = PLANS[plan]["messages"]
-    with get_db() as db:
-        db.execute(
-            "INSERT INTO clients (api_key, game_name, plan, messages_limit) VALUES (?, ?, ?, ?)",
-            (api_key, game_name, plan, limit)
-        )
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO clients (api_key, game_name, plan, messages_limit) VALUES (%s, %s, %s, %s)",
+        (api_key, game_name, plan, limit)
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
     return success({
         "api_key": api_key,
         "game_name": game_name,
@@ -213,7 +230,7 @@ def chat():
     if used >= limit:
         return jsonify({
             "status": "limit_reached",
-            "message": "Monthly message limit reached! Upgrade your plan.",
+            "message": "Daily message limit reached! Upgrade your plan.",
             "messages_used": used,
             "messages_limit": limit
         })
@@ -296,15 +313,19 @@ Remember today is {datetime.now().strftime("%B %d, %Y")}."""
         history.append({"role": "assistant", "content": reply})
         save_conversation_history(api_key, player_name, history)
 
-        with get_db() as db:
-            db.execute(
-                "UPDATE clients SET messages_used = messages_used + 1 WHERE api_key=?",
-                (api_key,)
-            )
-            db.execute(
-                "INSERT INTO usage_log (api_key, player_name, message, response) VALUES (?, ?, ?, ?)",
-                (api_key, player_name, message, reply)
-            )
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute(
+            "UPDATE clients SET messages_used = messages_used + 1 WHERE api_key=%s",
+            (api_key,)
+        )
+        cur.execute(
+            "INSERT INTO usage_log (api_key, player_name, message, response) VALUES (%s, %s, %s, %s)",
+            (api_key, player_name, message, reply)
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
 
         return success({
             "reply": reply,
@@ -343,18 +364,28 @@ def upgrade():
     if not client:
         return error("Invalid API key", 401)
     new_limit = PLANS[new_plan]["messages"]
-    with get_db() as db:
-        db.execute(
-            "UPDATE clients SET plan=?, messages_limit=? WHERE api_key=?",
-            (new_plan, new_limit, api_key)
-        )
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE clients SET plan=%s, messages_limit=%s WHERE api_key=%s",
+        (new_plan, new_limit, api_key)
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
     return success({"plan": new_plan, "messages_limit": new_limit}, "Plan upgraded!")
 
 @app.route("/", methods=["GET"])
 def dashboard():
-    with get_db() as db:
-        clients = db.execute("SELECT * FROM clients ORDER BY created_at DESC").fetchall()
-        total_messages = db.execute("SELECT SUM(messages_used) as t FROM clients").fetchone()["t"] or 0
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("SELECT * FROM clients ORDER BY created_at DESC")
+    clients = cur.fetchall()
+    cur.execute("SELECT SUM(messages_used) as t FROM clients")
+    total = cur.fetchone()
+    total_messages = total["t"] or 0
+    cur.close()
+    conn.close()
 
     rows = ""
     for c in clients:
@@ -411,6 +442,6 @@ def dashboard():
     """
 
 if __name__ == "__main__":
-    print("\n🚀 RobloxAI Server running at http://localhost:5000")
-    print("📊 Open http://localhost:5000 in your browser\n")
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    print(f"\n🚀 RobloxAI Server running on port {port}")
+    app.run(host="0.0.0.0", port=port)
