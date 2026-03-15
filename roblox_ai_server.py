@@ -112,42 +112,57 @@ def web_search(query):
         results = []
         encoded = urllib.parse.quote(query)
  
-        google_url = f"https://www.google.com/search?q={encoded}&num=5"
-        google_resp = requests.get(google_url, headers=headers, timeout=6)
-        soup = BeautifulSoup(google_resp.text, "html.parser")
+        # 1. Try DuckDuckGo Instant Answer API first (most reliable, not blocked)
+        try:
+            ddg_api_url = f"https://api.duckduckgo.com/?q={encoded}&format=json&no_html=1&skip_disambig=1"
+            ddg_api_resp = requests.get(ddg_api_url, headers=headers, timeout=6)
+            ddg_data = ddg_api_resp.json()
  
-        featured = soup.select_one("div.BNeawe")
-        if featured:
-            results.append(f"FEATURED: {featured.get_text()[:300]}")
+            # Abstract (best — direct answer)
+            if ddg_data.get("AbstractText"):
+                results.append(f"ANSWER: {ddg_data['AbstractText'][:400]}")
  
-        for div in soup.select("div.VwiC3b")[:5]:
-            text = div.get_text(strip=True)
-            if text and len(text) > 30:
-                results.append(text[:200])
+            # Instant answer (e.g. "Donald Trump is the 47th president")
+            if ddg_data.get("Answer"):
+                results.append(f"INSTANT: {ddg_data['Answer'][:300]}")
  
-        for span in soup.select("span.hgKElc")[:2]:
-            text = span.get_text(strip=True)
-            if text:
-                results.append(f"FACT: {text[:200]}")
+            # Infobox facts (e.g. for a person: title, born, etc.)
+            infobox = ddg_data.get("Infobox", {})
+            if isinstance(infobox, dict):
+                for item in infobox.get("content", [])[:5]:
+                    label = item.get("label", "")
+                    value = item.get("value", "")
+                    if label and value:
+                        results.append(f"{label}: {value}")
+ 
+            # Related topics
+            for topic in ddg_data.get("RelatedTopics", [])[:3]:
+                if isinstance(topic, dict) and topic.get("Text"):
+                    results.append(topic["Text"][:200])
+ 
+        except Exception as e:
+            print(f"DDG API error: {e}")
  
         if results:
             return " | ".join(results)
  
-        ddg_url = f"https://html.duckduckgo.com/html/?q={encoded}"
-        ddg_resp = requests.get(ddg_url, headers=headers, timeout=6)
-        ddg_soup = BeautifulSoup(ddg_resp.text, "html.parser")
-        snippets = ddg_soup.select(".result__snippet")
-        titles = ddg_soup.select(".result__title")
+        # 2. Fallback: DuckDuckGo HTML search
+        try:
+            ddg_url = f"https://html.duckduckgo.com/html/?q={encoded}"
+            ddg_resp = requests.get(ddg_url, headers=headers, timeout=6)
+            ddg_soup = BeautifulSoup(ddg_resp.text, "html.parser")
+            snippets = ddg_soup.select(".result__snippet")
+            titles = ddg_soup.select(".result__title")
  
-        for i, snippet in enumerate(snippets[:5]):
-            title = titles[i].get_text(strip=True) if i < len(titles) else ""
-            text = snippet.get_text(strip=True)
-            results.append(f"{title}: {text}" if title else text)
+            for i, snippet in enumerate(snippets[:5]):
+                title = titles[i].get_text(strip=True) if i < len(titles) else ""
+                text = snippet.get_text(strip=True)
+                results.append(f"{title}: {text}" if title else text)
+        except Exception as e:
+            print(f"DDG HTML error: {e}")
  
-        if results:
-            return " | ".join(results)
+        return " | ".join(results) if results else ""
  
-        return ""
     except Exception as e:
         print(f"Search error: {e}")
         return ""
@@ -328,11 +343,15 @@ IMPORTANT RULES:
     if search_context:
         system_prompt += f"""
  
-LIVE WEB SEARCH RESULTS (use these to answer accurately):
+=== LIVE WEB SEARCH RESULTS ===
 {search_context}
+=== END OF SEARCH RESULTS ===
  
-Use these results to give an accurate and up to date answer.
-Never say you cannot access the internet — you just searched and got these results."""
+CRITICAL: The search results above are ALWAYS more accurate than your training data.
+- If search results contradict what you learned in training, ALWAYS trust the search results.
+- For example: if your training says Joe Biden is president but search results say Donald Trump, say Donald Trump.
+- NEVER answer from memory when search results are provided — use the results.
+- Give a direct, confident answer based on the search results above."""
     else:
         system_prompt += f"""
  
