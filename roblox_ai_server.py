@@ -811,6 +811,7 @@ def generate_image():
         image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=512&height=512&nologo=true&safe=true"
         print(f"Generating image for prompt: {prompt}")
         img_resp = requests.get(image_url, timeout=60)
+        print(f"Pollinations status: {img_resp.status_code}, size: {len(img_resp.content)} bytes")
         if img_resp.status_code != 200:
             return error("Image generation failed")
 
@@ -827,6 +828,7 @@ def generate_image():
             timeout=30
         )
         imgbb_data = imgbb_resp.json()
+        print(f"ImgBB response: {imgbb_data}")
         if not imgbb_data.get("success"):
             return error("Image upload failed: " + str(imgbb_data))
 
