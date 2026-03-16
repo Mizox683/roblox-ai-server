@@ -599,6 +599,27 @@ def admin_data():
     customers = cur.fetchall()
     cur.execute("SELECT SUM(messages_used) as t FROM clients")
     total = cur.fetchone()
+
+    # Get daily usage per key (today)
+    today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    month_start = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    cur.execute("""
+        SELECT api_key, COUNT(*) as count
+        FROM usage_log
+        WHERE timestamp >= %s
+        GROUP BY api_key
+    """, (today_start,))
+    daily_usage = {row["api_key"]: row["count"] for row in cur.fetchall()}
+
+    cur.execute("""
+        SELECT api_key, COUNT(*) as count
+        FROM usage_log
+        WHERE timestamp >= %s
+        GROUP BY api_key
+    """, (month_start,))
+    monthly_usage = {row["api_key"]: row["count"] for row in cur.fetchall()}
+
     cur.close()
     conn.close()
     result = []
@@ -607,7 +628,11 @@ def admin_data():
             "api_key": c["api_key"],
             "game_name": c["game_name"],
             "plan": c["plan"],
-            "messages_used": c["messages_used"],
+            "messages_used_today": daily_usage.get(c["api_key"], 0),
+            "messages_used_month": monthly_usage.get(c["api_key"], 0),
+            "messages_used_total": c["messages_used"],
+            "messages_limit_daily": 1000 if c["plan"] == "premium" else 50,
+            "messages_limit_monthly": 30000 if c["plan"] == "premium" else 50,
             "messages_limit": c["messages_limit"],
             "created_at": c["created_at"].isoformat() if c["created_at"] else None,
             "discord_username": c["discord_username"],
@@ -758,6 +783,44 @@ def dashboard():
         + rows +
         "</table></body></html>"
     )
+
+@app.route("/generate-image", methods=["POST"])
+def generate_image():
+    data = request.json
+    api_key = data.get("api_key")
+    prompt = data.get("prompt", "").strip()
+
+    if not api_key or not prompt:
+        return error("api_key and prompt required")
+
+    client = get_client(api_key)
+    if not client:
+        return error("Invalid API key", 401)
+
+    if len(prompt) > 500:
+        return error("Prompt too long")
+
+    try:
+        encoded_prompt = urllib.parse.quote(prompt)
+        image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=512&height=512&nologo=true&safe=true"
+
+        # Fetch the image and return it as base64 so Roblox can use it
+        img_resp = requests.get(image_url, timeout=30)
+        if img_resp.status_code != 200:
+            return error("Image generation failed")
+
+        import base64
+        img_b64 = base64.b64encode(img_resp.content).decode("utf-8")
+
+        return success({
+            "image_b64": img_b64,
+            "prompt": prompt,
+            "url": image_url
+        })
+
+    except Exception as e:
+        return error("Image generation error: " + str(e))
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
