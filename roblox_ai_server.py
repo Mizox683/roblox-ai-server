@@ -786,6 +786,7 @@ def dashboard():
 
 @app.route("/generate-image", methods=["POST"])
 def generate_image():
+    import base64
     data = request.json
     api_key = data.get("api_key")
     prompt = data.get("prompt", "").strip()
@@ -800,22 +801,41 @@ def generate_image():
     if len(prompt) > 500:
         return error("Prompt too long")
 
+    imgbb_key = os.environ.get("IMGBB_API_KEY", "")
+    if not imgbb_key:
+        return error("Image generation not configured")
+
     try:
+        # 1. Generate image via Pollinations
         encoded_prompt = urllib.parse.quote(prompt)
         image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=512&height=512&nologo=true&safe=true"
-
-        # Fetch the image and return it as base64 so Roblox can use it
-        img_resp = requests.get(image_url, timeout=30)
+        print(f"Generating image for prompt: {prompt}")
+        img_resp = requests.get(image_url, timeout=60)
         if img_resp.status_code != 200:
             return error("Image generation failed")
 
-        import base64
+        # 2. Upload to ImgBB
         img_b64 = base64.b64encode(img_resp.content).decode("utf-8")
+        imgbb_resp = requests.post(
+            "https://api.imgbb.com/1/upload",
+            data={
+                "key": imgbb_key,
+                "image": img_b64,
+                "name": f"mizoxai_{hashlib.md5(prompt.encode()).hexdigest()[:8]}",
+                "expiration": 600  # delete after 10 mins to save storage
+            },
+            timeout=30
+        )
+        imgbb_data = imgbb_resp.json()
+        if not imgbb_data.get("success"):
+            return error("Image upload failed: " + str(imgbb_data))
+
+        hosted_url = imgbb_data["data"]["url"]
+        print(f"Image hosted at: {hosted_url}")
 
         return success({
-            "image_b64": img_b64,
-            "prompt": prompt,
-            "url": image_url
+            "url": hosted_url,
+            "prompt": prompt
         })
 
     except Exception as e:
