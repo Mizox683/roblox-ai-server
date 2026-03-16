@@ -26,8 +26,8 @@ ADMIN_SECRET = os.environ.get("ADMIN_SECRET", "mizox_admin_2024")
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 PLANS = {
-    "free":      {"messages": 50,    "price": 0},
-    "premium":   {"messages": 30000, "price": 5.00},
+    "free":     {"messages": 50,    "price": 0},
+    "premium":  {"messages": 30000, "price": 5.00},
 }
 
 def get_db():
@@ -300,7 +300,6 @@ def register():
             "INSERT INTO ip_registrations (ip_address, api_key, game_name) VALUES (%s, %s, %s)",
             (ip, api_key, game_name)
         )
-        # Add to customers table too for tracking
         cur2.execute(
             "INSERT INTO customers (api_key, game_name, plan) VALUES (%s, %s, %s)",
             (api_key, game_name, "free")
@@ -533,11 +532,10 @@ def add_review():
         conn.close()
         return jsonify({"status": "error", "message": "already_reviewed"}), 403
 
-    plan = "free"
     cur2 = conn.cursor()
     cur2.execute(
         "INSERT INTO reviews (ip_address, reviewer_name, rating, review_text, plan) VALUES (%s, %s, %s, %s, %s)",
-        (ip, reviewer_name, rating, review_text, plan)
+        (ip, reviewer_name, rating, review_text, "free")
     )
     conn.commit()
     cur2.close()
@@ -599,27 +597,6 @@ def admin_data():
     customers = cur.fetchall()
     cur.execute("SELECT SUM(messages_used) as t FROM clients")
     total = cur.fetchone()
-
-    # Get daily usage per key (today)
-    today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-    month_start = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-
-    cur.execute("""
-        SELECT api_key, COUNT(*) as count
-        FROM usage_log
-        WHERE timestamp >= %s
-        GROUP BY api_key
-    """, (today_start,))
-    daily_usage = {row["api_key"]: row["count"] for row in cur.fetchall()}
-
-    cur.execute("""
-        SELECT api_key, COUNT(*) as count
-        FROM usage_log
-        WHERE timestamp >= %s
-        GROUP BY api_key
-    """, (month_start,))
-    monthly_usage = {row["api_key"]: row["count"] for row in cur.fetchall()}
-
     cur.close()
     conn.close()
     result = []
@@ -628,11 +605,7 @@ def admin_data():
             "api_key": c["api_key"],
             "game_name": c["game_name"],
             "plan": c["plan"],
-            "messages_used_today": daily_usage.get(c["api_key"], 0),
-            "messages_used_month": monthly_usage.get(c["api_key"], 0),
-            "messages_used_total": c["messages_used"],
-            "messages_limit_daily": 1000 if c["plan"] == "premium" else 50,
-            "messages_limit_monthly": 30000 if c["plan"] == "premium" else 50,
+            "messages_used": c["messages_used"],
             "messages_limit": c["messages_limit"],
             "created_at": c["created_at"].isoformat() if c["created_at"] else None,
             "discord_username": c["discord_username"],
@@ -783,66 +756,6 @@ def dashboard():
         + rows +
         "</table></body></html>"
     )
-
-@app.route("/generate-image", methods=["POST"])
-def generate_image():
-    import base64
-    data = request.json
-    api_key = data.get("api_key")
-    prompt = data.get("prompt", "").strip()
-
-    if not api_key or not prompt:
-        return error("api_key and prompt required")
-
-    client = get_client(api_key)
-    if not client:
-        return error("Invalid API key", 401)
-
-    if len(prompt) > 500:
-        return error("Prompt too long")
-
-    imgbb_key = os.environ.get("IMGBB_API_KEY", "")
-    if not imgbb_key:
-        return error("Image generation not configured")
-
-    try:
-        # 1. Generate image via Pollinations
-        encoded_prompt = urllib.parse.quote(prompt)
-        image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=512&height=512&nologo=true&safe=true"
-        print(f"Generating image for prompt: {prompt}")
-        img_resp = requests.get(image_url, timeout=60)
-        print(f"Pollinations status: {img_resp.status_code}, size: {len(img_resp.content)} bytes")
-        if img_resp.status_code != 200:
-            return error("Image generation failed")
-
-        # 2. Upload to ImgBB
-        img_b64 = base64.b64encode(img_resp.content).decode("utf-8")
-        imgbb_resp = requests.post(
-            "https://api.imgbb.com/1/upload",
-            data={
-                "key": imgbb_key,
-                "image": img_b64,
-                "name": f"mizoxai_{hashlib.md5(prompt.encode()).hexdigest()[:8]}",
-                "expiration": 600  # delete after 10 mins to save storage
-            },
-            timeout=30
-        )
-        imgbb_data = imgbb_resp.json()
-        print(f"ImgBB response: {imgbb_data}")
-        if not imgbb_data.get("success"):
-            return error("Image upload failed: " + str(imgbb_data))
-
-        hosted_url = imgbb_data["data"]["url"]
-        print(f"Image hosted at: {hosted_url}")
-
-        return success({
-            "url": hosted_url,
-            "prompt": prompt
-        })
-
-    except Exception as e:
-        return error("Image generation error: " + str(e))
-
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
