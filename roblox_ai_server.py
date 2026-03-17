@@ -461,12 +461,7 @@ def chat():
 
 @app.route("/generate-image", methods=["POST"])
 def generate_image():
-    try:
-        from PIL import Image
-        import io
-        import struct
-    except ImportError:
-        return error("Image generation not available - PIL not installed")
+
 
     data = request.json
     api_key = data.get("api_key")
@@ -483,16 +478,19 @@ def generate_image():
         return error("Prompt too long")
 
     try:
-        # Generate image via Pollinations
+        from PIL import Image
+        import io
         encoded_prompt = urllib.parse.quote(prompt)
-        image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=128&height=128&nologo=true&safe=true"
-        print(f"Generating image: {prompt}")
-        img_resp = requests.get(image_url, timeout=60)
+        image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=64&height=64&nologo=true&safe=true"
+        print(f"Fetching image from Pollinations...")
+        img_resp = requests.get(image_url, timeout=90)
+        print(f"Pollinations response: {img_resp.status_code}, size: {len(img_resp.content)} bytes, type: {img_resp.headers.get('content-type')}")
         if img_resp.status_code != 200:
-            return error("Image generation failed")
+            return error("Pollinations failed: " + str(img_resp.status_code))
 
-        # Convert to small pixel array for Roblox EditableImage
+        print("Opening image with PIL...")
         img = Image.open(io.BytesIO(img_resp.content)).convert("RGBA").resize((64, 64))
+        print(f"Image opened: {img.size}")
         pixels = []
         for y in range(64):
             for x in range(64):
@@ -502,7 +500,7 @@ def generate_image():
                 pixels.append(b)
                 pixels.append(a)
 
-        print(f"Image processed: 64x64 = {len(pixels)} values")
+        print(f"Pixels generated: {len(pixels)}")
         return success({
             "pixels": pixels,
             "width": 64,
@@ -511,7 +509,9 @@ def generate_image():
         })
 
     except Exception as e:
+        import traceback
         print(f"Image error: {e}")
+        print(traceback.format_exc())
         return error("Image generation error: " + str(e))
 
 @app.route("/usage/<api_key>", methods=["GET"])
