@@ -391,12 +391,11 @@ def chat():
         "The player name is " + player_name + ".\n"
         "Today is " + today + ".\n\n"
         "IMPORTANT RULES:\n"
-        "- You have access to web search but results may be outdated - always caveat current info\n"
+        "- You have access to web search but results may be outdated\n"
         "- Never say you are an AI language model - just be natural and helpful\n"
         "- You remember everything said in this conversation\n"
         "- Keep responses concise (1-3 sentences) and fun for a Roblox game\n"
-        "- Never think out loud, never say searching or let me check - just give the answer\n"
-        "- If you are not sure about current info, say it might be outdated\n"
+        "- Never think out loud - just give the answer\n"
         "- Today is " + today + " - always use this as the current date"
     )
 
@@ -405,15 +404,11 @@ def chat():
             "\n\n=== WEB SEARCH RESULTS (may be outdated) ===\n"
             + search_context +
             "\n=== END OF SEARCH RESULTS ===\n\n"
-            "Use these results to help answer but note they may not be fully up to date.\n"
-            "Give a direct answer and if it involves current events mention it may be outdated.\n"
-            "Do NOT think out loud or show your reasoning - just answer."
+            "Use these results to help answer. Give a direct answer.\n"
+            "Do NOT think out loud - just answer."
         )
     else:
-        system_prompt += (
-            "\n\nNo web search needed. Answer from your knowledge.\n"
-            "Remember today is " + today + "."
-        )
+        system_prompt += "\n\nAnswer from your knowledge. Today is " + today + "."
 
     history.append({"role": "user", "content": message})
 
@@ -426,9 +421,7 @@ def chat():
             },
             json={
                 "model": "llama-3.3-70b-versatile",
-                "messages": [
-                    {"role": "system", "content": system_prompt}
-                ] + history,
+                "messages": [{"role": "system", "content": system_prompt}] + history,
                 "max_tokens": 200,
                 "temperature": 0.4,
             },
@@ -437,8 +430,8 @@ def chat():
 
         result = response.json()
         if "choices" not in result or not result["choices"]:
-            print(f"Groq error response: {result}")
-            return error("AI returned no response: " + str(result.get("error", {}).get("message", "Unknown")))
+            print(f"Groq error: {result}")
+            return error("AI returned no response")
         reply = result["choices"][0]["message"]["content"].strip()
 
         history.append({"role": "assistant", "content": reply})
@@ -446,10 +439,7 @@ def chat():
 
         conn = get_db()
         cur = conn.cursor()
-        cur.execute(
-            "UPDATE clients SET messages_used = messages_used + 1 WHERE api_key=%s",
-            (api_key,)
-        )
+        cur.execute("UPDATE clients SET messages_used = messages_used + 1 WHERE api_key=%s", (api_key,))
         cur.execute(
             "INSERT INTO usage_log (api_key, player_name, message, response) VALUES (%s, %s, %s, %s)",
             (api_key, player_name, message, reply)
@@ -468,6 +458,61 @@ def chat():
 
     except Exception as e:
         return error("AI error: " + str(e))
+
+@app.route("/generate-image", methods=["POST"])
+def generate_image():
+    try:
+        from PIL import Image
+        import io
+        import struct
+    except ImportError:
+        return error("Image generation not available - PIL not installed")
+
+    data = request.json
+    api_key = data.get("api_key")
+    prompt = data.get("prompt", "").strip()
+
+    if not api_key or not prompt:
+        return error("api_key and prompt required")
+
+    client = get_client(api_key)
+    if not client:
+        return error("Invalid API key", 401)
+
+    if len(prompt) > 500:
+        return error("Prompt too long")
+
+    try:
+        # Generate image via Pollinations
+        encoded_prompt = urllib.parse.quote(prompt)
+        image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=128&height=128&nologo=true&safe=true"
+        print(f"Generating image: {prompt}")
+        img_resp = requests.get(image_url, timeout=60)
+        if img_resp.status_code != 200:
+            return error("Image generation failed")
+
+        # Convert to small pixel array for Roblox EditableImage
+        img = Image.open(io.BytesIO(img_resp.content)).convert("RGBA").resize((64, 64))
+        pixels = []
+        for y in range(64):
+            for x in range(64):
+                r, g, b, a = img.getpixel((x, y))
+                pixels.append(r)
+                pixels.append(g)
+                pixels.append(b)
+                pixels.append(a)
+
+        print(f"Image processed: 64x64 = {len(pixels)} values")
+        return success({
+            "pixels": pixels,
+            "width": 64,
+            "height": 64,
+            "prompt": prompt
+        })
+
+    except Exception as e:
+        print(f"Image error: {e}")
+        return error("Image generation error: " + str(e))
 
 @app.route("/usage/<api_key>", methods=["GET"])
 def usage(api_key):
@@ -658,14 +703,8 @@ def admin_renew():
     new_expiry = datetime.now() + timedelta(days=30)
     conn = get_db()
     cur = conn.cursor()
-    cur.execute(
-        "UPDATE clients SET messages_used=0, messages_limit=%s WHERE api_key=%s",
-        (PLANS["premium"]["messages"], api_key)
-    )
-    cur.execute(
-        "UPDATE customers SET expires_at=%s, active=TRUE, expiry_email_sent=FALSE WHERE api_key=%s",
-        (new_expiry, api_key)
-    )
+    cur.execute("UPDATE clients SET messages_used=0, messages_limit=%s WHERE api_key=%s", (PLANS["premium"]["messages"], api_key))
+    cur.execute("UPDATE customers SET expires_at=%s, active=TRUE, expiry_email_sent=FALSE WHERE api_key=%s", (new_expiry, api_key))
     conn.commit()
     cur.close()
     conn.close()
@@ -694,10 +733,7 @@ def admin_enable():
     api_key = data.get("api_key")
     conn = get_db()
     cur = conn.cursor()
-    cur.execute(
-        "UPDATE clients SET messages_limit=%s WHERE api_key=%s",
-        (PLANS["premium"]["messages"], api_key)
-    )
+    cur.execute("UPDATE clients SET messages_limit=%s WHERE api_key=%s", (PLANS["premium"]["messages"], api_key))
     cur.execute("UPDATE customers SET active=TRUE WHERE api_key=%s", (api_key,))
     conn.commit()
     cur.close()
@@ -715,28 +751,23 @@ def dashboard():
     total_messages = total["t"] or 0
     cur.close()
     conn.close()
-
     rows = ""
     for c in clients:
         remaining = c["messages_limit"] - c["messages_used"]
         pct = round((c["messages_used"] / c["messages_limit"]) * 100) if c["messages_limit"] > 0 else 0
         rows += (
-            "<tr>"
-            "<td>" + c["game_name"] + "</td>"
+            "<tr><td>" + c["game_name"] + "</td>"
             "<td><span class=\"plan " + c["plan"] + "\">" + c["plan"].upper() + "</span></td>"
             "<td>" + f'{c["messages_used"]:,}' + "</td>"
             "<td>" + f'{c["messages_limit"]:,}' + "</td>"
             "<td>" + f'{remaining:,}' + "</td>"
             "<td><div class=\"bar\"><div class=\"fill\" style=\"width:" + str(pct) + "%\"></div></div> " + str(pct) + "%</td>"
-            "<td><code>" + c["api_key"] + "</code></td>"
-            "</tr>"
+            "<td><code>" + c["api_key"] + "</code></td></tr>"
         )
-
     return (
         "<html><head><title>MizoxAI Dashboard</title><style>"
         "body{font-family:monospace;background:#1a1a2e;color:#cdd6f4;padding:40px;}"
-        "h1{color:#89b4fa;}"
-        "table{width:100%;border-collapse:collapse;margin-top:20px;}"
+        "h1{color:#89b4fa;}table{width:100%;border-collapse:collapse;margin-top:20px;}"
         "th{background:#313244;padding:12px;text-align:left;color:#89b4fa;}"
         "td{padding:10px;border-bottom:1px solid #313244;}"
         "code{background:#313244;padding:2px 6px;border-radius:4px;font-size:11px;}"
@@ -746,15 +777,11 @@ def dashboard():
         ".fill{background:#89b4fa;border-radius:4px;height:8px;}"
         ".stat{background:#2a2a3e;border-radius:12px;padding:20px;display:inline-block;min-width:150px;text-align:center;margin:10px;}"
         ".num{font-size:36px;font-weight:bold;color:#89b4fa;}"
-        "</style></head><body>"
-        "<h1>🤖 MizoxAI Dashboard</h1>"
-        "<div>"
+        "</style></head><body><h1>🤖 MizoxAI Dashboard</h1><div>"
         "<div class=\"stat\"><div class=\"num\">" + str(len(clients)) + "</div>Games</div>"
         "<div class=\"stat\"><div class=\"num\">" + f'{total_messages:,}' + "</div>Total Messages</div>"
-        "</div>"
-        "<table><tr><th>Game</th><th>Plan</th><th>Used</th><th>Limit</th><th>Remaining</th><th>Usage</th><th>API Key</th></tr>"
-        + rows +
-        "</table></body></html>"
+        "</div><table><tr><th>Game</th><th>Plan</th><th>Used</th><th>Limit</th><th>Remaining</th><th>Usage</th><th>API Key</th></tr>"
+        + rows + "</table></body></html>"
     )
 
 if __name__ == "__main__":
