@@ -483,51 +483,68 @@ def generate_image():
         hf_token = os.environ.get("HF_TOKEN", "")
         encoded_prompt = urllib.parse.quote(prompt)
 
-        # Try Pollinations first
-        image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=64&height=64&nologo=true&safe=true&seed={hash(prompt) % 1000}"
-        print(f"Fetching image from Pollinations...")
-        img_resp = requests.get(image_url, timeout=90, headers={"User-Agent": "Mozilla/5.0"})
-        print(f"Pollinations response: {img_resp.status_code}, type: {img_resp.headers.get('content-type')}")
+        SIZE = 16
+        # Try multiple image sources
+        img_resp = None
 
-        # Fallback to Hugging Face if Pollinations fails
-        if img_resp.status_code != 200 or "image" not in img_resp.headers.get("content-type", ""):
-            print("Pollinations failed, trying Hugging Face...")
-            hf_url = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2"
-            hf_headers = {"Content-Type": "application/json"}
-            if hf_token:
-                hf_headers["Authorization"] = "Bearer " + hf_token
-            hf_resp = requests.post(
-                hf_url,
-                headers=hf_headers,
-                json={"inputs": prompt, "parameters": {"width": 64, "height": 64}},
-                timeout=90
-            )
-            print(f"HuggingFace response: {hf_resp.status_code}")
-            if hf_resp.status_code == 200:
-                img_resp = hf_resp
-            else:
-                return error("Image generation failed on all providers")
+        # 1. Pollinations
+        image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=256&height=256&nologo=true&safe=true"
+        print("Trying Pollinations...")
+        try:
+            r = requests.get(image_url, timeout=90, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
+            print(f"Pollinations: {r.status_code} {r.headers.get('content-type')}")
+            if r.status_code == 200 and "image" in r.headers.get("content-type", ""):
+                img_resp = r
+        except Exception as e:
+            print(f"Pollinations error: {e}")
 
-        if img_resp.status_code != 200:
-            return error("Image generation failed: " + str(img_resp.status_code))
+        # 2. HuggingFace fallback
+        if not img_resp:
+            hf_token = os.environ.get("HF_TOKEN", "")
+            hf_models = [
+                "black-forest-labs/FLUX.1-schnell",
+                "stabilityai/stable-diffusion-xl-base-1.0",
+                "runwayml/stable-diffusion-v1-5",
+            ]
+            for model in hf_models:
+                try:
+                    hf_headers = {"Content-Type": "application/json"}
+                    if hf_token:
+                        hf_headers["Authorization"] = "Bearer " + hf_token
+                    print(f"Trying HuggingFace model: {model}")
+                    r = requests.post(
+                        f"https://api-inference.huggingface.co/models/{model}",
+                        headers=hf_headers,
+                        json={"inputs": prompt},
+                        timeout=90
+                    )
+                    print(f"HF {model}: {r.status_code} {r.headers.get('content-type')}")
+                    if r.status_code == 200 and "image" in r.headers.get("content-type", ""):
+                        img_resp = r
+                        break
+                except Exception as e:
+                    print(f"HF error: {e}")
 
-        print("Opening image with PIL...")
-        img = Image.open(io.BytesIO(img_resp.content)).convert("RGBA").resize((64, 64))
-        print(f"Image opened: {img.size}")
+        if not img_resp:
+            return error("Image generation failed on all providers")
+
+        print("Processing image...")
+        img = Image.open(io.BytesIO(img_resp.content)).convert("RGBA").resize((SIZE, SIZE), Image.NEAREST)
+        print(f"Image resized to {SIZE}x{SIZE}")
         pixels = []
-        for y in range(64):
-            for x in range(64):
+        for y in range(SIZE):
+            for x in range(SIZE):
                 r, g, b, a = img.getpixel((x, y))
                 pixels.append(r)
                 pixels.append(g)
                 pixels.append(b)
                 pixels.append(a)
 
-        print(f"Pixels generated: {len(pixels)}")
+        print(f"Pixels: {len(pixels)}")
         return success({
             "pixels": pixels,
-            "width": 64,
-            "height": 64,
+            "width": SIZE,
+            "height": SIZE,
             "prompt": prompt
         })
 
