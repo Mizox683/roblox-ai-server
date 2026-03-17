@@ -480,13 +480,36 @@ def generate_image():
     try:
         from PIL import Image
         import io
+        hf_token = os.environ.get("HF_TOKEN", "")
         encoded_prompt = urllib.parse.quote(prompt)
-        image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=64&height=64&nologo=true&safe=true"
+
+        # Try Pollinations first
+        image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=64&height=64&nologo=true&safe=true&seed={hash(prompt) % 1000}"
         print(f"Fetching image from Pollinations...")
-        img_resp = requests.get(image_url, timeout=90)
-        print(f"Pollinations response: {img_resp.status_code}, size: {len(img_resp.content)} bytes, type: {img_resp.headers.get('content-type')}")
+        img_resp = requests.get(image_url, timeout=90, headers={"User-Agent": "Mozilla/5.0"})
+        print(f"Pollinations response: {img_resp.status_code}, type: {img_resp.headers.get('content-type')}")
+
+        # Fallback to Hugging Face if Pollinations fails
+        if img_resp.status_code != 200 or "image" not in img_resp.headers.get("content-type", ""):
+            print("Pollinations failed, trying Hugging Face...")
+            hf_url = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2"
+            hf_headers = {"Content-Type": "application/json"}
+            if hf_token:
+                hf_headers["Authorization"] = "Bearer " + hf_token
+            hf_resp = requests.post(
+                hf_url,
+                headers=hf_headers,
+                json={"inputs": prompt, "parameters": {"width": 64, "height": 64}},
+                timeout=90
+            )
+            print(f"HuggingFace response: {hf_resp.status_code}")
+            if hf_resp.status_code == 200:
+                img_resp = hf_resp
+            else:
+                return error("Image generation failed on all providers")
+
         if img_resp.status_code != 200:
-            return error("Pollinations failed: " + str(img_resp.status_code))
+            return error("Image generation failed: " + str(img_resp.status_code))
 
         print("Opening image with PIL...")
         img = Image.open(io.BytesIO(img_resp.content)).convert("RGBA").resize((64, 64))
